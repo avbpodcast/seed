@@ -1,0 +1,865 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SeedPhrasePoker · v1.0.0</title>
+<style>
+:root{
+  --paper:#F7F5EF; --grid:#E4E1D6; --ink:#191B1F; --ink-soft:#61645F;
+  --bit:#1F4E5F; --bit-soft:#E3EDF0; --stamp:#A8352A; --stamp-soft:#F6E8E5;
+  --amber:#C56A16; --amber-soft:#F6E7D4;
+  --ok:#2C6E49; --ok-soft:#E4F0E8;
+  --blue:#1F4E5F; --blue-soft:#E3EDF0;
+  --orange:#C56A16; --orange-soft:#F6E7D4;
+  --mono:ui-monospace,"SF Mono","Cascadia Mono",Consolas,Menlo,monospace;
+  --sans:system-ui,-apple-system,"Segoe UI",sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{background:var(--paper)}
+body{
+  font-family:var(--sans);color:var(--ink);line-height:1.55;
+  background:linear-gradient(var(--grid) 1px,transparent 1px),
+             linear-gradient(90deg,var(--grid) 1px,transparent 1px);
+  background-size:26px 26px;background-color:var(--paper);
+  min-height:100vh;padding:28px 16px 72px;
+}
+main{max-width:760px;margin:0 auto}
+.sheet{background:var(--paper);border:1.5px solid var(--ink);box-shadow:4px 4px 0 rgba(25,27,31,.11);padding:22px;margin-bottom:20px}
+h1{font-family:var(--mono);font-size:1.28rem;letter-spacing:-.01em;font-weight:700}
+h1 .v{color:var(--ink-soft);font-weight:400;font-size:.8rem}
+.sub{color:var(--ink-soft);font-size:.9rem;margin-top:6px;max-width:58ch}
+h2{font-family:var(--mono);font-size:.76rem;letter-spacing:.11em;text-transform:uppercase;color:var(--ink-soft);margin-bottom:13px}
+h2 .step{display:inline-block;border:1.5px solid var(--ink);width:21px;height:21px;line-height:19px;text-align:center;color:var(--ink);margin-right:8px;font-size:.72rem}
+.selftest{font-family:var(--mono);font-size:.78rem;border:1.5px solid var(--ok);background:var(--ok-soft);color:var(--ok);padding:9px 13px;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.selftest.fail{border-color:var(--stamp);background:var(--stamp-soft);color:var(--stamp)}
+.selftest button{font-family:inherit;font-size:inherit;color:inherit;background:none;border:1px solid currentColor;padding:2px 8px;cursor:pointer}
+#testDetail{font-family:var(--mono);font-size:.75rem;color:var(--ink-soft);margin-top:11px;white-space:pre-wrap}
+.toggle{display:flex;margin-bottom:10px;font-family:var(--mono);font-size:.82rem}
+.toggle button{flex:1;padding:9px 6px;border:1.5px solid var(--ink);background:var(--paper);cursor:pointer;font-family:inherit;font-size:inherit;color:var(--ink);line-height:1.3}
+.toggle button+button{border-left:none}
+.toggle button.on{background:var(--ink);color:var(--paper)}
+.toggle button:disabled{opacity:.45;cursor:default}
+.toggle button:focus-visible{outline:2px solid var(--bit);outline-offset:2px}
+.modenote{background:var(--bit-soft);border-left:3px solid var(--bit);padding:11px 14px;font-size:.87rem;margin:14px 0 0}
+.deck{padding:16px;border:1.5px solid var(--ink);margin-top:12px}
+.deck.blue{background:var(--blue-soft);border-color:var(--blue)}
+.deck.orange{background:var(--orange-soft);border-color:var(--orange)}
+.deck h3{font-family:var(--mono);font-size:.95rem;margin-bottom:10px}
+.btns{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.ranklab{font-family:var(--mono);font-size:.72rem;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-soft);margin:12px 0 4px}
+.xrow{background:var(--amber-soft);border:1.5px dashed var(--amber);padding:8px;margin-top:0}
+.xrow button{min-width:64px;font-weight:700}
+.btns button{
+  font-family:var(--mono);font-size:.9rem;min-width:42px;
+  border:1.5px solid var(--ink);background:var(--paper);color:var(--ink);
+  padding:7px 10px;cursor:pointer;
+}
+.btns button.hearts,.btns button.diamonds{color:#A8352A}
+.btns button.on{background:var(--ink);color:var(--paper)}
+.btns button.on.hearts,.btns button.on.diamonds{background:#A8352A;border-color:#A8352A;color:#fff}
+.btns button[data-suit]{
+  font-family:"Segoe UI Symbol","Apple Symbols","Noto Sans Symbols 2","Noto Sans Symbols",DejaVu Sans,var(--sans);
+  font-size:1.35rem;
+  min-width:56px;
+  min-height:48px;
+  padding:8px 12px;
+  line-height:1;
+  font-variant-emoji:text;
+}
+.rowbtn{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap}
+.rowbtn button,.helpbtn{
+  font-family:var(--mono);font-size:.78rem;border:1.5px solid var(--ink);
+  background:var(--paper);color:var(--ink);padding:6px 12px;cursor:pointer
+}
+.bigbtn{display:block;width:100%;margin-top:12px;font-family:var(--mono);font-size:.86rem;letter-spacing:.03em;
+  border:1.5px solid var(--bit);background:var(--bit);color:var(--paper);padding:13px;cursor:pointer;line-height:1.45}
+.bigbtn.amber{border-color:var(--amber);background:var(--amber);color:#fff}
+.bigbtn:disabled{border-color:#C9C6BA;background:#EDEBE4;color:var(--ink-soft);cursor:default}
+.audit{font-family:var(--mono);font-size:.78rem;color:var(--ink-soft);margin-top:10px;min-height:1.3em}
+.wordcard{display:grid;grid-template-columns:repeat(auto-fill,minmax(155px,1fr));gap:8px;margin-top:10px}
+.word{border:1px solid var(--grid);border-bottom:1.5px solid var(--ink);padding:7px 10px;font-family:var(--mono);font-size:.94rem;display:flex;gap:9px;background:#fff}
+.word .n{color:var(--ink-soft);font-size:.72rem;width:2ch;text-align:right;flex-shrink:0;padding-top:3px}
+.word .idx{color:var(--ink-soft);font-size:.7rem;margin-left:auto}
+.wordcard.blurred .word span:not(.n){filter:blur(8px);user-select:none}
+.placeholder{color:var(--ink-soft);font-size:.88rem;font-style:italic}
+.phase{background:var(--amber-soft);border-left:3px solid var(--amber);padding:12px 14px;font-size:.88rem;margin-top:12px}
+.phase h3{font-family:var(--mono);font-size:.8rem;letter-spacing:.06em;text-transform:uppercase;margin-bottom:8px}
+.okbox{border:1.5px solid var(--ok);background:var(--ok-soft);color:var(--ok);font-family:var(--mono);font-size:.78rem;padding:9px 13px;margin-top:10px}
+.warnbox{border:1.5px solid var(--stamp);background:var(--stamp-soft);color:var(--stamp);font-family:var(--mono);font-size:.78rem;padding:9px 13px;margin-top:10px}
+textarea{width:100%;min-height:88px;font-family:var(--mono);font-size:1rem;letter-spacing:.04em;line-height:1.7;
+  border:1.5px solid var(--ink);background:#fff;padding:13px;resize:vertical;color:var(--ink);margin-top:8px}
+.notes{font-size:.86rem;color:var(--ink-soft)}
+.notes p{margin-bottom:9px}
+.notes p:last-child{margin-bottom:0}
+.notes strong{color:var(--ink)}
+.notes a{color:var(--ink);text-decoration:none;border-bottom:1px solid var(--grid)}
+.notes a:hover{border-bottom-color:var(--ink)}
+
+.notes ul{margin:8px 0 8px 18px}
+.notes li{margin-bottom:4px}
+.overlay{position:fixed;inset:0;background:rgba(25,27,31,.45);z-index:20;display:flex;align-items:flex-start;justify-content:center;padding:28px 16px;overflow:auto}
+.overlay[hidden]{display:none}
+.sheetpop{background:var(--paper);border:1.5px solid var(--ink);box-shadow:6px 6px 0 rgba(25,27,31,.16);max-width:640px;width:100%;padding:20px}
+.sheetpop h3{font-family:var(--mono);font-size:.95rem;margin-bottom:10px}
+.sheetpop h4{font-family:var(--mono);font-size:.8rem;margin:14px 0 6px}
+.stamp{font-family:var(--mono);font-size:.72rem;color:var(--ink-soft);margin-top:16px}
+kbd{font-family:var(--mono);border:1px solid var(--ink);padding:0 5px;font-size:.78rem}
+@media (max-width:600px){
+  .sheet{padding:17px}
+  .btns button{min-width:36px;min-height:44px;padding:8px 8px}
+  .btns button[data-suit]{font-size:1.28rem;min-width:52px;min-height:46px;padding:8px 10px}
+  .xrow button{min-width:64px}
+}
+
+
+.back{
+  display:inline-block;font-family:var(--mono);font-size:.72rem;letter-spacing:.04em;
+  color:var(--ink-soft);text-decoration:none;border-bottom:1px solid var(--grid);
+  margin:0 0 10px
+}
+.back:hover{color:var(--ink);border-bottom-color:var(--ink)}
+.sitefoot{
+  margin-top:18px;padding:10px 4px 0;
+  font-family:var(--mono);font-size:.72rem;letter-spacing:.04em;
+  color:var(--ink-soft);display:flex;flex-wrap:wrap;gap:8px 20px;
+  justify-content:center;text-align:center;width:100%
+}
+.sitefoot a{color:var(--ink-soft);text-decoration:none;border-bottom:1px solid var(--grid)}
+.sitefoot a:hover{color:var(--ink);border-bottom-color:var(--ink)}
+</style>
+</head>
+<body>
+<main>
+
+<header class="sheet">
+  <a class="back" href="seedphrase-poker-v1.0.0.html">← choose a file</a>
+  
+  <h1>SEEDPHRASE POKER <span class="v">v1.0.0 · Basic</span></h1>
+  <p class="sub">Two physical decks become a 12- or 24-word BIP-39 phrase. This file never calls a browser RNG, never talks to the network, and stops at the words.</p>
+</header>
+
+<section class="sheet">
+  <div class="selftest" id="stBar">
+    <span id="stText">running self-test…</span>
+    <button id="stToggle" type="button">details</button>
+  </div>
+  <div id="testDetail" hidden></div>
+</section>
+
+<section class="sheet" id="setup">
+  <h2><span class="step">1</span>Set the length before the first pair</h2>
+  <div class="toggle" role="group" aria-label="Phrase length">
+    <button id="w12" class="on" type="button">12 words<br><small>11 entropy pairs + checksum pair</small></button>
+    <button id="w24" type="button">24 words<br><small>23 entropy pairs + checksum pair</small></button>
+  </div>
+  <div class="modenote" id="modeNote"></div>
+  <div class="rowbtn">
+    <button class="helpbtn" id="howtoOpen" type="button">How the decks work</button>
+  </div>
+</section>
+
+<section class="sheet" id="draw">
+  <h2><span class="step">2</span>Enter the pair you just drew</h2>
+
+  <div class="deck blue" id="blueDeck">
+    <h3>Blue deck — 32 cards (A–8 of each suit)</h3>
+    <div class="btns" id="blueSuits">
+      <button type="button" class="hearts" data-suit="♥">♥︎</button>
+      <button type="button" class="diamonds" data-suit="♦">♦︎</button>
+      <button type="button" data-suit="♣">♣︎</button>
+      <button type="button" data-suit="♠">♠︎</button>
+    </div>
+    <div class="btns" id="blueRanks">
+      <button type="button" data-rank="A">A</button>
+      <button type="button" data-rank="2">2</button>
+      <button type="button" data-rank="3">3</button>
+      <button type="button" data-rank="4">4</button>
+      <button type="button" data-rank="5">5</button>
+      <button type="button" data-rank="6">6</button>
+      <button type="button" data-rank="7">7</button>
+      <button type="button" data-rank="8">8</button>
+    </div>
+  </div>
+
+  <div class="deck orange" id="orangeDeck">
+    <h3>Orange deck — 64 cards (full 52 + 12 marked face cards)</h3>
+    <div class="btns" id="orangeSuits">
+      <button type="button" class="hearts" data-suit="♥">♥︎</button>
+      <button type="button" class="diamonds" data-suit="♦">♦︎</button>
+      <button type="button" data-suit="♣">♣︎</button>
+      <button type="button" data-suit="♠">♠︎</button>
+    </div>
+    <div id="orangeRanks">
+      <div class="btns">
+        <button type="button" data-rank="A">A</button>
+        <button type="button" data-rank="2">2</button>
+        <button type="button" data-rank="3">3</button>
+        <button type="button" data-rank="4">4</button>
+        <button type="button" data-rank="5">5</button>
+        <button type="button" data-rank="6">6</button>
+        <button type="button" data-rank="7">7</button>
+        <button type="button" data-rank="8">8</button>
+        <button type="button" data-rank="9">9</button>
+        <button type="button" data-rank="10">10</button>
+        <button type="button" data-rank="J">J</button>
+        <button type="button" data-rank="Q">Q</button>
+        <button type="button" data-rank="K">K</button>
+      </div>
+      <p class="ranklab">Marked X — the twelve extra face cards</p>
+      <div class="btns xrow">
+        <button type="button" data-rank="JX">JX</button>
+        <button type="button" data-rank="QX">QX</button>
+        <button type="button" data-rank="KX">KX</button>
+      </div>
+    </div>
+  </div>
+
+  <button class="bigbtn" id="confirmPair" type="button" disabled>Confirm entropy pair</button>
+  <button class="bigbtn amber" id="confirmChecksum" type="button" disabled>Confirm checksum pair</button>
+  <div class="rowbtn">
+    <button type="button" id="redoBtn" disabled>Redo last entropy word</button>
+    <button type="button" id="resetBtn">Reset</button>
+  </div>
+  <div class="audit" id="statusLine"></div>
+  <div class="audit" id="pairAudit"></div>
+</section>
+
+<section class="sheet" id="words">
+  <h2><span class="step">3</span>Words so far</h2>
+  <div id="wordList"><p class="placeholder">No pairs yet.</p></div>
+  <div id="checksumBox" class="phase" hidden></div>
+</section>
+
+<section class="sheet" id="phraseBox">
+  <h2><span class="step">4</span>Finished phrase</h2>
+  <div id="validFlag"></div>
+  <div id="wordCard" class="wordcard blurred"></div>
+  <textarea id="seedPhraseText" readonly hidden></textarea>
+  <div class="rowbtn">
+    <button type="button" id="revealBtn" disabled>Show words</button>
+    <button type="button" id="copyBtn" disabled>Copy</button>
+    <button type="button" id="wipeBtn">Wipe</button>
+  </div>
+</section>
+
+<section class="sheet notes">
+  <h2>Notes</h2>
+  <p>Index formula: <strong>word index = blue × 64 + orange</strong>, range 0–2047. Suits in order ♥ ♦ ♣ ♠. Blue ranks A 2 3 4 5 6 7 8. Orange ranks A 2 3 4 5 6 7 8 9 10 J Q K JX QX KX.</p>
+  <p>Printed pair lists live next to this file: <a href="seedphrase-poker-pairs-0based.pdf">seedphrase-poker-pairs-0based.pdf</a> (numbers 0–2047, same as this page) and <a href="seedphrase-poker-pairs-1based.pdf">seedphrase-poker-pairs-1based.pdf</a> (same pairs, numbers 1–2048). Pick one booklet and stay with it. The older GitHub start0 / start1 lists use the same pairs.</p>
+  <p>The last physical pair is not copied as a word. This page keeps the top 7 bits (12-word) or top 3 bits (24-word) and fills the checksum from SHA-256 of the entropy. That last word will usually differ from the raw pair word.</p>
+  <p>Write the words on paper. Then wipe and close the tab. Check the phrase on a second offline BIP-39 tool before any coins move.</p>
+  <p class="stamp">v1.0.0 · offline file · no storage · no network</p>
+</section>
+
+<footer class="sitefoot">
+  <span>v1.0.0</span>
+  <a href="https://allesvoorbitcoin.be/21tools" target="_blank" rel="noopener noreferrer">allesvoorbitcoin.be/21tools</a>
+  <a href="https://github.com/avbpodcast" target="_blank" rel="noopener noreferrer">GitHub</a>
+  <a href="https://coinos.io/pay/Mr21" target="_blank" rel="noopener noreferrer">value for value</a>
+</footer>
+</main>
+
+<div class="overlay" id="howto" hidden>
+  <div class="sheetpop" role="dialog" aria-labelledby="howtoTitle">
+    <h3 id="howtoTitle">How the decks work</h3>
+    <p class="notes">Use two standard 52-card decks of the same size. Leave jokers out. A pencil marks twelve extra face cards.</p>
+    <h4>Blue deck — 32 cards</h4>
+    <p class="notes">From deck 1 keep only Ace through 8 of every suit. Set the rest aside. The twelve face cards (J Q K of each suit) go to the orange deck later.</p>
+    <h4>Orange deck — 64 cards</h4>
+    <p class="notes">Take deck 2 in full. From the leftover face cards of deck 1, mark each Jack, Queen and King with a clear X. A Jack of Hearts and a Jack of Hearts X are two different cards. Add those twelve marked cards to deck 2.</p>
+    <h4>Shuffle and draw</h4>
+    <p class="notes">Shuffle each deck on its own. Seven or more riffle shuffles per deck is a reasonable minimum. Blue face-down on the left, orange on the right.</p>
+    <p class="notes">Preferred rhythm: after every pair, return both cards and shuffle again. Repeats are allowed in BIP-39. Faster rhythm: one thorough shuffle, then deal without replacement. Do not do that for 23 entropy words from a 32-card blue deck — you run out of blue cards. Shuffle again if the blue pile is empty.</p>
+    <p class="notes">Each draw is the top blue card plus the top orange card. Enter that pair here, or look it up in the printed booklet. Do this 11 times for a 12-word phrase, or 23 times for 24 words. Those are entropy words only.</p>
+    <p class="notes">The 0-based booklet matches the #index this page prints. The 1-based booklet is the same list with every number raised by one. Do not mix them.</p>
+    <h4>Checksum pair</h4>
+    <p class="notes">A 12-word phrase is 128 bits of entropy plus a 4-bit SHA-256 checksum. Eleven pairs give 121 bits, so you still need 7 entropy bits and 4 checksum bits. A 24-word phrase is 256 + 8; twenty-three pairs give 253 bits, so you still need 3 + 8.</p>
+    <p class="notes">Draw one extra pair. This page keeps only the missing entropy bits from that pair and fills the checksum bits from SHA-256. Cards alone cannot compute that hash. The printed last word is the BIP-39 word, not the raw pair word.</p>
+    <p class="notes">If you would rather not use this file for the last word, enter the 11 or 23 entropy words plus a candidate last word on an air-gapped hardware wallet. If it rejects the phrase, discard only the last pair and draw again. Chance of a hit: 1 in 16 for 12 words, 1 in 256 for 24 words.</p>
+    <p class="notes">Do not invent the last word, and do not pick a favourite from the valid endings.</p>
+    <div class="rowbtn"><button type="button" id="howtoClose">Close</button></div>
+  </div>
+</div>
+
+<script>
+const WORDS = [
+  "abandon", "ability", "able", "about", "above", "absent", "absorb", "abstract", "absurd", "abuse", "access", "accident",
+  "account", "accuse", "achieve", "acid", "acoustic", "acquire", "across", "act", "action", "actor", "actress", "actual",
+  "adapt", "add", "addict", "address", "adjust", "admit", "adult", "advance", "advice", "aerobic", "affair", "afford",
+  "afraid", "again", "age", "agent", "agree", "ahead", "aim", "air", "airport", "aisle", "alarm", "album",
+  "alcohol", "alert", "alien", "all", "alley", "allow", "almost", "alone", "alpha", "already", "also", "alter",
+  "always", "amateur", "amazing", "among", "amount", "amused", "analyst", "anchor", "ancient", "anger", "angle", "angry",
+  "animal", "ankle", "announce", "annual", "another", "answer", "antenna", "antique", "anxiety", "any", "apart", "apology",
+  "appear", "apple", "approve", "april", "arch", "arctic", "area", "arena", "argue", "arm", "armed", "armor",
+  "army", "around", "arrange", "arrest", "arrive", "arrow", "art", "artefact", "artist", "artwork", "ask", "aspect",
+  "assault", "asset", "assist", "assume", "asthma", "athlete", "atom", "attack", "attend", "attitude", "attract", "auction",
+  "audit", "august", "aunt", "author", "auto", "autumn", "average", "avocado", "avoid", "awake", "aware", "away",
+  "awesome", "awful", "awkward", "axis", "baby", "bachelor", "bacon", "badge", "bag", "balance", "balcony", "ball",
+  "bamboo", "banana", "banner", "bar", "barely", "bargain", "barrel", "base", "basic", "basket", "battle", "beach",
+  "bean", "beauty", "because", "become", "beef", "before", "begin", "behave", "behind", "believe", "below", "belt",
+  "bench", "benefit", "best", "betray", "better", "between", "beyond", "bicycle", "bid", "bike", "bind", "biology",
+  "bird", "birth", "bitter", "black", "blade", "blame", "blanket", "blast", "bleak", "bless", "blind", "blood",
+  "blossom", "blouse", "blue", "blur", "blush", "board", "boat", "body", "boil", "bomb", "bone", "bonus",
+  "book", "boost", "border", "boring", "borrow", "boss", "bottom", "bounce", "box", "boy", "bracket", "brain",
+  "brand", "brass", "brave", "bread", "breeze", "brick", "bridge", "brief", "bright", "bring", "brisk", "broccoli",
+  "broken", "bronze", "broom", "brother", "brown", "brush", "bubble", "buddy", "budget", "buffalo", "build", "bulb",
+  "bulk", "bullet", "bundle", "bunker", "burden", "burger", "burst", "bus", "business", "busy", "butter", "buyer",
+  "buzz", "cabbage", "cabin", "cable", "cactus", "cage", "cake", "call", "calm", "camera", "camp", "can",
+  "canal", "cancel", "candy", "cannon", "canoe", "canvas", "canyon", "capable", "capital", "captain", "car", "carbon",
+  "card", "cargo", "carpet", "carry", "cart", "case", "cash", "casino", "castle", "casual", "cat", "catalog",
+  "catch", "category", "cattle", "caught", "cause", "caution", "cave", "ceiling", "celery", "cement", "census", "century",
+  "cereal", "certain", "chair", "chalk", "champion", "change", "chaos", "chapter", "charge", "chase", "chat", "cheap",
+  "check", "cheese", "chef", "cherry", "chest", "chicken", "chief", "child", "chimney", "choice", "choose", "chronic",
+  "chuckle", "chunk", "churn", "cigar", "cinnamon", "circle", "citizen", "city", "civil", "claim", "clap", "clarify",
+  "claw", "clay", "clean", "clerk", "clever", "click", "client", "cliff", "climb", "clinic", "clip", "clock",
+  "clog", "close", "cloth", "cloud", "clown", "club", "clump", "cluster", "clutch", "coach", "coast", "coconut",
+  "code", "coffee", "coil", "coin", "collect", "color", "column", "combine", "come", "comfort", "comic", "common",
+  "company", "concert", "conduct", "confirm", "congress", "connect", "consider", "control", "convince", "cook", "cool", "copper",
+  "copy", "coral", "core", "corn", "correct", "cost", "cotton", "couch", "country", "couple", "course", "cousin",
+  "cover", "coyote", "crack", "cradle", "craft", "cram", "crane", "crash", "crater", "crawl", "crazy", "cream",
+  "credit", "creek", "crew", "cricket", "crime", "crisp", "critic", "crop", "cross", "crouch", "crowd", "crucial",
+  "cruel", "cruise", "crumble", "crunch", "crush", "cry", "crystal", "cube", "culture", "cup", "cupboard", "curious",
+  "current", "curtain", "curve", "cushion", "custom", "cute", "cycle", "dad", "damage", "damp", "dance", "danger",
+  "daring", "dash", "daughter", "dawn", "day", "deal", "debate", "debris", "decade", "december", "decide", "decline",
+  "decorate", "decrease", "deer", "defense", "define", "defy", "degree", "delay", "deliver", "demand", "demise", "denial",
+  "dentist", "deny", "depart", "depend", "deposit", "depth", "deputy", "derive", "describe", "desert", "design", "desk",
+  "despair", "destroy", "detail", "detect", "develop", "device", "devote", "diagram", "dial", "diamond", "diary", "dice",
+  "diesel", "diet", "differ", "digital", "dignity", "dilemma", "dinner", "dinosaur", "direct", "dirt", "disagree", "discover",
+  "disease", "dish", "dismiss", "disorder", "display", "distance", "divert", "divide", "divorce", "dizzy", "doctor", "document",
+  "dog", "doll", "dolphin", "domain", "donate", "donkey", "donor", "door", "dose", "double", "dove", "draft",
+  "dragon", "drama", "drastic", "draw", "dream", "dress", "drift", "drill", "drink", "drip", "drive", "drop",
+  "drum", "dry", "duck", "dumb", "dune", "during", "dust", "dutch", "duty", "dwarf", "dynamic", "eager",
+  "eagle", "early", "earn", "earth", "easily", "east", "easy", "echo", "ecology", "economy", "edge", "edit",
+  "educate", "effort", "egg", "eight", "either", "elbow", "elder", "electric", "elegant", "element", "elephant", "elevator",
+  "elite", "else", "embark", "embody", "embrace", "emerge", "emotion", "employ", "empower", "empty", "enable", "enact",
+  "end", "endless", "endorse", "enemy", "energy", "enforce", "engage", "engine", "enhance", "enjoy", "enlist", "enough",
+  "enrich", "enroll", "ensure", "enter", "entire", "entry", "envelope", "episode", "equal", "equip", "era", "erase",
+  "erode", "erosion", "error", "erupt", "escape", "essay", "essence", "estate", "eternal", "ethics", "evidence", "evil",
+  "evoke", "evolve", "exact", "example", "excess", "exchange", "excite", "exclude", "excuse", "execute", "exercise", "exhaust",
+  "exhibit", "exile", "exist", "exit", "exotic", "expand", "expect", "expire", "explain", "expose", "express", "extend",
+  "extra", "eye", "eyebrow", "fabric", "face", "faculty", "fade", "faint", "faith", "fall", "false", "fame",
+  "family", "famous", "fan", "fancy", "fantasy", "farm", "fashion", "fat", "fatal", "father", "fatigue", "fault",
+  "favorite", "feature", "february", "federal", "fee", "feed", "feel", "female", "fence", "festival", "fetch", "fever",
+  "few", "fiber", "fiction", "field", "figure", "file", "film", "filter", "final", "find", "fine", "finger",
+  "finish", "fire", "firm", "first", "fiscal", "fish", "fit", "fitness", "fix", "flag", "flame", "flash",
+  "flat", "flavor", "flee", "flight", "flip", "float", "flock", "floor", "flower", "fluid", "flush", "fly",
+  "foam", "focus", "fog", "foil", "fold", "follow", "food", "foot", "force", "forest", "forget", "fork",
+  "fortune", "forum", "forward", "fossil", "foster", "found", "fox", "fragile", "frame", "frequent", "fresh", "friend",
+  "fringe", "frog", "front", "frost", "frown", "frozen", "fruit", "fuel", "fun", "funny", "furnace", "fury",
+  "future", "gadget", "gain", "galaxy", "gallery", "game", "gap", "garage", "garbage", "garden", "garlic", "garment",
+  "gas", "gasp", "gate", "gather", "gauge", "gaze", "general", "genius", "genre", "gentle", "genuine", "gesture",
+  "ghost", "giant", "gift", "giggle", "ginger", "giraffe", "girl", "give", "glad", "glance", "glare", "glass",
+  "glide", "glimpse", "globe", "gloom", "glory", "glove", "glow", "glue", "goat", "goddess", "gold", "good",
+  "goose", "gorilla", "gospel", "gossip", "govern", "gown", "grab", "grace", "grain", "grant", "grape", "grass",
+  "gravity", "great", "green", "grid", "grief", "grit", "grocery", "group", "grow", "grunt", "guard", "guess",
+  "guide", "guilt", "guitar", "gun", "gym", "habit", "hair", "half", "hammer", "hamster", "hand", "happy",
+  "harbor", "hard", "harsh", "harvest", "hat", "have", "hawk", "hazard", "head", "health", "heart", "heavy",
+  "hedgehog", "height", "hello", "helmet", "help", "hen", "hero", "hidden", "high", "hill", "hint", "hip",
+  "hire", "history", "hobby", "hockey", "hold", "hole", "holiday", "hollow", "home", "honey", "hood", "hope",
+  "horn", "horror", "horse", "hospital", "host", "hotel", "hour", "hover", "hub", "huge", "human", "humble",
+  "humor", "hundred", "hungry", "hunt", "hurdle", "hurry", "hurt", "husband", "hybrid", "ice", "icon", "idea",
+  "identify", "idle", "ignore", "ill", "illegal", "illness", "image", "imitate", "immense", "immune", "impact", "impose",
+  "improve", "impulse", "inch", "include", "income", "increase", "index", "indicate", "indoor", "industry", "infant", "inflict",
+  "inform", "inhale", "inherit", "initial", "inject", "injury", "inmate", "inner", "innocent", "input", "inquiry", "insane",
+  "insect", "inside", "inspire", "install", "intact", "interest", "into", "invest", "invite", "involve", "iron", "island",
+  "isolate", "issue", "item", "ivory", "jacket", "jaguar", "jar", "jazz", "jealous", "jeans", "jelly", "jewel",
+  "job", "join", "joke", "journey", "joy", "judge", "juice", "jump", "jungle", "junior", "junk", "just",
+  "kangaroo", "keen", "keep", "ketchup", "key", "kick", "kid", "kidney", "kind", "kingdom", "kiss", "kit",
+  "kitchen", "kite", "kitten", "kiwi", "knee", "knife", "knock", "know", "lab", "label", "labor", "ladder",
+  "lady", "lake", "lamp", "language", "laptop", "large", "later", "latin", "laugh", "laundry", "lava", "law",
+  "lawn", "lawsuit", "layer", "lazy", "leader", "leaf", "learn", "leave", "lecture", "left", "leg", "legal",
+  "legend", "leisure", "lemon", "lend", "length", "lens", "leopard", "lesson", "letter", "level", "liar", "liberty",
+  "library", "license", "life", "lift", "light", "like", "limb", "limit", "link", "lion", "liquid", "list",
+  "little", "live", "lizard", "load", "loan", "lobster", "local", "lock", "logic", "lonely", "long", "loop",
+  "lottery", "loud", "lounge", "love", "loyal", "lucky", "luggage", "lumber", "lunar", "lunch", "luxury", "lyrics",
+  "machine", "mad", "magic", "magnet", "maid", "mail", "main", "major", "make", "mammal", "man", "manage",
+  "mandate", "mango", "mansion", "manual", "maple", "marble", "march", "margin", "marine", "market", "marriage", "mask",
+  "mass", "master", "match", "material", "math", "matrix", "matter", "maximum", "maze", "meadow", "mean", "measure",
+  "meat", "mechanic", "medal", "media", "melody", "melt", "member", "memory", "mention", "menu", "mercy", "merge",
+  "merit", "merry", "mesh", "message", "metal", "method", "middle", "midnight", "milk", "million", "mimic", "mind",
+  "minimum", "minor", "minute", "miracle", "mirror", "misery", "miss", "mistake", "mix", "mixed", "mixture", "mobile",
+  "model", "modify", "mom", "moment", "monitor", "monkey", "monster", "month", "moon", "moral", "more", "morning",
+  "mosquito", "mother", "motion", "motor", "mountain", "mouse", "move", "movie", "much", "muffin", "mule", "multiply",
+  "muscle", "museum", "mushroom", "music", "must", "mutual", "myself", "mystery", "myth", "naive", "name", "napkin",
+  "narrow", "nasty", "nation", "nature", "near", "neck", "need", "negative", "neglect", "neither", "nephew", "nerve",
+  "nest", "net", "network", "neutral", "never", "news", "next", "nice", "night", "noble", "noise", "nominee",
+  "noodle", "normal", "north", "nose", "notable", "note", "nothing", "notice", "novel", "now", "nuclear", "number",
+  "nurse", "nut", "oak", "obey", "object", "oblige", "obscure", "observe", "obtain", "obvious", "occur", "ocean",
+  "october", "odor", "off", "offer", "office", "often", "oil", "okay", "old", "olive", "olympic", "omit",
+  "once", "one", "onion", "online", "only", "open", "opera", "opinion", "oppose", "option", "orange", "orbit",
+  "orchard", "order", "ordinary", "organ", "orient", "original", "orphan", "ostrich", "other", "outdoor", "outer", "output",
+  "outside", "oval", "oven", "over", "own", "owner", "oxygen", "oyster", "ozone", "pact", "paddle", "page",
+  "pair", "palace", "palm", "panda", "panel", "panic", "panther", "paper", "parade", "parent", "park", "parrot",
+  "party", "pass", "patch", "path", "patient", "patrol", "pattern", "pause", "pave", "payment", "peace", "peanut",
+  "pear", "peasant", "pelican", "pen", "penalty", "pencil", "people", "pepper", "perfect", "permit", "person", "pet",
+  "phone", "photo", "phrase", "physical", "piano", "picnic", "picture", "piece", "pig", "pigeon", "pill", "pilot",
+  "pink", "pioneer", "pipe", "pistol", "pitch", "pizza", "place", "planet", "plastic", "plate", "play", "please",
+  "pledge", "pluck", "plug", "plunge", "poem", "poet", "point", "polar", "pole", "police", "pond", "pony",
+  "pool", "popular", "portion", "position", "possible", "post", "potato", "pottery", "poverty", "powder", "power", "practice",
+  "praise", "predict", "prefer", "prepare", "present", "pretty", "prevent", "price", "pride", "primary", "print", "priority",
+  "prison", "private", "prize", "problem", "process", "produce", "profit", "program", "project", "promote", "proof", "property",
+  "prosper", "protect", "proud", "provide", "public", "pudding", "pull", "pulp", "pulse", "pumpkin", "punch", "pupil",
+  "puppy", "purchase", "purity", "purpose", "purse", "push", "put", "puzzle", "pyramid", "quality", "quantum", "quarter",
+  "question", "quick", "quit", "quiz", "quote", "rabbit", "raccoon", "race", "rack", "radar", "radio", "rail",
+  "rain", "raise", "rally", "ramp", "ranch", "random", "range", "rapid", "rare", "rate", "rather", "raven",
+  "raw", "razor", "ready", "real", "reason", "rebel", "rebuild", "recall", "receive", "recipe", "record", "recycle",
+  "reduce", "reflect", "reform", "refuse", "region", "regret", "regular", "reject", "relax", "release", "relief", "rely",
+  "remain", "remember", "remind", "remove", "render", "renew", "rent", "reopen", "repair", "repeat", "replace", "report",
+  "require", "rescue", "resemble", "resist", "resource", "response", "result", "retire", "retreat", "return", "reunion", "reveal",
+  "review", "reward", "rhythm", "rib", "ribbon", "rice", "rich", "ride", "ridge", "rifle", "right", "rigid",
+  "ring", "riot", "ripple", "risk", "ritual", "rival", "river", "road", "roast", "robot", "robust", "rocket",
+  "romance", "roof", "rookie", "room", "rose", "rotate", "rough", "round", "route", "royal", "rubber", "rude",
+  "rug", "rule", "run", "runway", "rural", "sad", "saddle", "sadness", "safe", "sail", "salad", "salmon",
+  "salon", "salt", "salute", "same", "sample", "sand", "satisfy", "satoshi", "sauce", "sausage", "save", "say",
+  "scale", "scan", "scare", "scatter", "scene", "scheme", "school", "science", "scissors", "scorpion", "scout", "scrap",
+  "screen", "script", "scrub", "sea", "search", "season", "seat", "second", "secret", "section", "security", "seed",
+  "seek", "segment", "select", "sell", "seminar", "senior", "sense", "sentence", "series", "service", "session", "settle",
+  "setup", "seven", "shadow", "shaft", "shallow", "share", "shed", "shell", "sheriff", "shield", "shift", "shine",
+  "ship", "shiver", "shock", "shoe", "shoot", "shop", "short", "shoulder", "shove", "shrimp", "shrug", "shuffle",
+  "shy", "sibling", "sick", "side", "siege", "sight", "sign", "silent", "silk", "silly", "silver", "similar",
+  "simple", "since", "sing", "siren", "sister", "situate", "six", "size", "skate", "sketch", "ski", "skill",
+  "skin", "skirt", "skull", "slab", "slam", "sleep", "slender", "slice", "slide", "slight", "slim", "slogan",
+  "slot", "slow", "slush", "small", "smart", "smile", "smoke", "smooth", "snack", "snake", "snap", "sniff",
+  "snow", "soap", "soccer", "social", "sock", "soda", "soft", "solar", "soldier", "solid", "solution", "solve",
+  "someone", "song", "soon", "sorry", "sort", "soul", "sound", "soup", "source", "south", "space", "spare",
+  "spatial", "spawn", "speak", "special", "speed", "spell", "spend", "sphere", "spice", "spider", "spike", "spin",
+  "spirit", "split", "spoil", "sponsor", "spoon", "sport", "spot", "spray", "spread", "spring", "spy", "square",
+  "squeeze", "squirrel", "stable", "stadium", "staff", "stage", "stairs", "stamp", "stand", "start", "state", "stay",
+  "steak", "steel", "stem", "step", "stereo", "stick", "still", "sting", "stock", "stomach", "stone", "stool",
+  "story", "stove", "strategy", "street", "strike", "strong", "struggle", "student", "stuff", "stumble", "style", "subject",
+  "submit", "subway", "success", "such", "sudden", "suffer", "sugar", "suggest", "suit", "summer", "sun", "sunny",
+  "sunset", "super", "supply", "supreme", "sure", "surface", "surge", "surprise", "surround", "survey", "suspect", "sustain",
+  "swallow", "swamp", "swap", "swarm", "swear", "sweet", "swift", "swim", "swing", "switch", "sword", "symbol",
+  "symptom", "syrup", "system", "table", "tackle", "tag", "tail", "talent", "talk", "tank", "tape", "target",
+  "task", "taste", "tattoo", "taxi", "teach", "team", "tell", "ten", "tenant", "tennis", "tent", "term",
+  "test", "text", "thank", "that", "theme", "then", "theory", "there", "they", "thing", "this", "thought",
+  "three", "thrive", "throw", "thumb", "thunder", "ticket", "tide", "tiger", "tilt", "timber", "time", "tiny",
+  "tip", "tired", "tissue", "title", "toast", "tobacco", "today", "toddler", "toe", "together", "toilet", "token",
+  "tomato", "tomorrow", "tone", "tongue", "tonight", "tool", "tooth", "top", "topic", "topple", "torch", "tornado",
+  "tortoise", "toss", "total", "tourist", "toward", "tower", "town", "toy", "track", "trade", "traffic", "tragic",
+  "train", "transfer", "trap", "trash", "travel", "tray", "treat", "tree", "trend", "trial", "tribe", "trick",
+  "trigger", "trim", "trip", "trophy", "trouble", "truck", "true", "truly", "trumpet", "trust", "truth", "try",
+  "tube", "tuition", "tumble", "tuna", "tunnel", "turkey", "turn", "turtle", "twelve", "twenty", "twice", "twin",
+  "twist", "two", "type", "typical", "ugly", "umbrella", "unable", "unaware", "uncle", "uncover", "under", "undo",
+  "unfair", "unfold", "unhappy", "uniform", "unique", "unit", "universe", "unknown", "unlock", "until", "unusual", "unveil",
+  "update", "upgrade", "uphold", "upon", "upper", "upset", "urban", "urge", "usage", "use", "used", "useful",
+  "useless", "usual", "utility", "vacant", "vacuum", "vague", "valid", "valley", "valve", "van", "vanish", "vapor",
+  "various", "vast", "vault", "vehicle", "velvet", "vendor", "venture", "venue", "verb", "verify", "version", "very",
+  "vessel", "veteran", "viable", "vibrant", "vicious", "victory", "video", "view", "village", "vintage", "violin", "virtual",
+  "virus", "visa", "visit", "visual", "vital", "vivid", "vocal", "voice", "void", "volcano", "volume", "vote",
+  "voyage", "wage", "wagon", "wait", "walk", "wall", "walnut", "want", "warfare", "warm", "warrior", "wash",
+  "wasp", "waste", "water", "wave", "way", "wealth", "weapon", "wear", "weasel", "weather", "web", "wedding",
+  "weekend", "weird", "welcome", "west", "wet", "whale", "what", "wheat", "wheel", "when", "where", "whip",
+  "whisper", "wide", "width", "wife", "wild", "will", "win", "window", "wine", "wing", "wink", "winner",
+  "winter", "wire", "wisdom", "wise", "wish", "witness", "wolf", "woman", "wonder", "wood", "wool", "word",
+  "work", "world", "worry", "worth", "wrap", "wreck", "wrestle", "wrist", "write", "wrong", "yard", "year",
+  "yellow", "you", "young", "youth", "zebra", "zero", "zone", "zoo"
+];
+
+function sha256(bytes) {
+  const K = [
+    0x428a2f98,0x71374491,0xb5c0fbcf,0xe9b5dba5,0x3956c25b,0x59f111f1,0x923f82a4,0xab1c5ed5,
+    0xd807aa98,0x12835b01,0x243185be,0x550c7dc3,0x72be5d74,0x80deb1fe,0x9bdc06a7,0xc19bf174,
+    0xe49b69c1,0xefbe4786,0x0fc19dc6,0x240ca1cc,0x2de92c6f,0x4a7484aa,0x5cb0a9dc,0x76f988da,
+    0x983e5152,0xa831c66d,0xb00327c8,0xbf597fc7,0xc6e00bf3,0xd5a79147,0x06ca6351,0x14292967,
+    0x27b70a85,0x2e1b2138,0x4d2c6dfc,0x53380d13,0x650a7354,0x766a0abb,0x81c2c92e,0x92722c85,
+    0xa2bfe8a1,0xa81a664b,0xc24b8b70,0xc76c51a3,0xd192e819,0xd6990624,0xf40e3585,0x106aa070,
+    0x19a4c116,0x1e376c08,0x2748774c,0x34b0bcb5,0x391c0cb3,0x4ed8aa4a,0x5b9cca4f,0x682e6ff3,
+    0x748f82ee,0x78a5636f,0x84c87814,0x8cc70208,0x90befffa,0xa4506ceb,0xbef9a3f7,0xc67178f2
+  ];
+  function rotr(x, n) { return (x >>> n) | (x << (32 - n)); }
+  const arr = Array.from(bytes);
+  const bitLen = arr.length * 8;
+  arr.push(0x80);
+  while ((arr.length % 64) !== 56) arr.push(0);
+  const hi = Math.floor(bitLen / 0x100000000);
+  const lo = bitLen >>> 0;
+  arr.push((hi >>> 24) & 255, (hi >>> 16) & 255, (hi >>> 8) & 255, hi & 255,
+           (lo >>> 24) & 255, (lo >>> 16) & 255, (lo >>> 8) & 255, lo & 255);
+  let h0=0x6a09e667,h1=0xbb67ae85,h2=0x3c6ef372,h3=0xa54ff53a,h4=0x510e527f,h5=0x9b05688c,h6=0x1f83d9ab,h7=0x5be0cd19;
+  const w = new Array(64);
+  for (let i = 0; i < arr.length; i += 64) {
+    for (let t = 0; t < 16; t++) {
+      const j = i + t * 4;
+      w[t] = ((arr[j] << 24) | (arr[j+1] << 16) | (arr[j+2] << 8) | arr[j+3]) >>> 0;
+    }
+    for (let t = 16; t < 64; t++) {
+      const s0 = rotr(w[t-15],7) ^ rotr(w[t-15],18) ^ (w[t-15] >>> 3);
+      const s1 = rotr(w[t-2],17) ^ rotr(w[t-2],19) ^ (w[t-2] >>> 10);
+      w[t] = (w[t-16] + s0 + w[t-7] + s1) >>> 0;
+    }
+    let a=h0,b=h1,c=h2,d=h3,e=h4,f=h5,g=h6,h=h7;
+    for (let t = 0; t < 64; t++) {
+      const S1 = rotr(e,6) ^ rotr(e,11) ^ rotr(e,25);
+      const ch = (e & f) ^ (~e & g);
+      const t1 = (h + S1 + ch + K[t] + w[t]) >>> 0;
+      const S0 = rotr(a,2) ^ rotr(a,13) ^ rotr(a,22);
+      const maj = (a & b) ^ (a & c) ^ (b & c);
+      const t2 = (S0 + maj) >>> 0;
+      h=g; g=f; f=e; e=(d + t1) >>> 0; d=c; c=b; b=a; a=(t1 + t2) >>> 0;
+    }
+    h0=(h0+a)>>>0; h1=(h1+b)>>>0; h2=(h2+c)>>>0; h3=(h3+d)>>>0;
+    h4=(h4+e)>>>0; h5=(h5+f)>>>0; h6=(h6+g)>>>0; h7=(h7+h)>>>0;
+  }
+  const out = new Uint8Array(32);
+  const hs = [h0,h1,h2,h3,h4,h5,h6,h7];
+  for (let i = 0; i < 8; i++) {
+    out[i*4] = (hs[i] >>> 24) & 255;
+    out[i*4+1] = (hs[i] >>> 16) & 255;
+    out[i*4+2] = (hs[i] >>> 8) & 255;
+    out[i*4+3] = hs[i] & 255;
+  }
+  return out;
+}
+
+function sha256str(s) {
+  const bytes = new Uint8Array(s.length);
+  for (let i = 0; i < s.length; i++) bytes[i] = s.charCodeAt(i) & 255;
+  return sha256(bytes);
+}
+function hex(u8) {
+  return Array.from(u8).map(b => b.toString(16).padStart(2, "0")).join("");
+}
+function bitsToBytes(bitStr) {
+  if (bitStr.length % 8 !== 0) throw new Error("bit string not byte-aligned");
+  const out = new Uint8Array(bitStr.length / 8);
+  for (let i = 0; i < out.length; i++) out[i] = parseInt(bitStr.substr(i * 8, 8), 2);
+  return out;
+}
+function indexBits(index) { return index.toString(2).padStart(11, "0"); }
+
+const SUITS = ["♥", "♦", "♣", "♠"];
+const BLUE_RANKS = ["A", "2", "3", "4", "5", "6", "7", "8"];
+const ORANGE_RANKS = ["A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K", "JX", "QX", "KX"];
+
+let entropyWordTarget = 11;
+let phase = "entropy";
+let seedIndices = [];
+let seedWords = [];
+let selected = { blueSuit: null, blueRank: null, orangeSuit: null, orangeRank: null };
+let lastPairInfo = "";
+let revealed = false;
+
+function seedWordCount() { return entropyWordTarget === 11 ? 12 : 24; }
+
+function getCardIndex(deck, suit, rank) {
+  const suitIndex = SUITS.indexOf(suit);
+  const rankIndex = (deck === "blue" ? BLUE_RANKS : ORANGE_RANKS).indexOf(rank);
+  return suitIndex * (deck === "blue" ? 8 : 16) + rankIndex;
+}
+function pairToIndex(blueIdx, orangeIdx) { return blueIdx * 64 + orangeIdx; }
+function indexToPair(wordIndex) {
+  const blueIdx = Math.floor(wordIndex / 64);
+  const orangeIdx = wordIndex % 64;
+  return {
+    blueIdx, orangeIdx,
+    blue: BLUE_RANKS[blueIdx % 8] + SUITS[Math.floor(blueIdx / 8)],
+    orange: ORANGE_RANKS[orangeIdx % 16] + SUITS[Math.floor(orangeIdx / 16)]
+  };
+}
+function currentSelection() {
+  const s = selected;
+  if (!(s.blueSuit && s.blueRank && s.orangeSuit && s.orangeRank)) return null;
+  const blueIdx = getCardIndex("blue", s.blueSuit, s.blueRank);
+  const orangeIdx = getCardIndex("orange", s.orangeSuit, s.orangeRank);
+  const pairIndex = pairToIndex(blueIdx, orangeIdx);
+  return { blueIdx, orangeIdx, pairIndex, word: WORDS[pairIndex] };
+}
+
+function isValidMnemonic(words) {
+  if (words.length !== 12 && words.length !== 24) return false;
+  const idxs = words.map(w => WORDS.indexOf(w));
+  if (idxs.some(i => i < 0)) return false;
+  const bits = idxs.map(indexBits).join("");
+  const entLen = words.length === 12 ? 128 : 256;
+  const csLen = words.length === 12 ? 4 : 8;
+  const hash = sha256(bitsToBytes(bits.slice(0, entLen)));
+  let expect = "";
+  for (let i = 0; i < csLen; i++) expect += String((hash[Math.floor(i / 8)] >> (7 - (i % 8))) & 1);
+  return bits.slice(entLen) === expect;
+}
+
+function computeChecksumWord(pairIndex) {
+  const entWords = seedIndices.slice(0, entropyWordTarget);
+  let bits = entWords.map(indexBits).join("");
+  let extraBits, extra, csLen;
+  if (entropyWordTarget === 11) {
+    extraBits = 7;
+    extra = (pairIndex >> 4) & 0x7f;
+    bits += extra.toString(2).padStart(7, "0");
+    csLen = 4;
+  } else {
+    extraBits = 3;
+    extra = (pairIndex >> 8) & 0x07;
+    bits += extra.toString(2).padStart(3, "0");
+    csLen = 8;
+  }
+  if (bits.length !== (entropyWordTarget === 11 ? 128 : 256)) {
+    throw new Error("entropy bit length " + bits.length);
+  }
+  const hash = sha256(bitsToBytes(bits));
+  let cs = 0;
+  let acc = "";
+  for (let i = 0; i < csLen; i++) {
+    const bit = (hash[Math.floor(i / 8)] >> (7 - (i % 8))) & 1;
+    acc += String(bit);
+    cs = (cs << 1) | bit;
+  }
+  const lastIndex = (extra << csLen) | cs;
+  return {
+    extraBits, extra, csBits: acc, cs, lastIndex,
+    lastWord: WORDS[lastIndex],
+    lookup: indexToPair(lastIndex)
+  };
+}
+
+function resetSelections() {
+  selected = { blueSuit: null, blueRank: null, orangeSuit: null, orangeRank: null };
+  document.querySelectorAll(".deck button").forEach(b => b.classList.remove("on"));
+}
+
+function setLength(n) {
+  if (seedWords.length > 0) return;
+  entropyWordTarget = n;
+  document.getElementById("w12").classList.toggle("on", n === 11);
+  document.getElementById("w24").classList.toggle("on", n === 23);
+  render();
+}
+
+function confirmEntropyPair() {
+  if (phase !== "entropy") return;
+  const sel = currentSelection();
+  if (!sel) return;
+  seedIndices.push(sel.pairIndex);
+  seedWords.push(sel.word);
+  lastPairInfo = "Blue " + selected.blueRank + selected.blueSuit + " (#" + sel.blueIdx +
+    ") + Orange " + selected.orangeRank + selected.orangeSuit + " (#" + sel.orangeIdx +
+    ") → index " + sel.pairIndex + " → " + sel.word;
+  resetSelections();
+  if (seedWords.length === entropyWordTarget) phase = "checksum";
+  render();
+}
+
+function confirmChecksumPair() {
+  if (phase !== "checksum") return;
+  const sel = currentSelection();
+  if (!sel) return;
+  const result = computeChecksumWord(sel.pairIndex);
+  seedIndices.push(result.lastIndex);
+  seedWords.push(result.lastWord);
+  lastPairInfo = "Checksum pair raw index " + sel.pairIndex + " (" + sel.word + "). Kept " +
+    result.extraBits + " extra entropy bits, SHA-256 checksum " + result.csBits +
+    ". Final word index " + result.lastIndex + " = " + result.lastWord +
+    " (pair " + result.lookup.blue + " + " + result.lookup.orange + ").";
+  phase = "done";
+  revealed = false;
+  resetSelections();
+  render();
+}
+
+function redoLastWord() {
+  if (seedWords.length === 0 || phase === "done") return;
+  seedWords.pop();
+  seedIndices.pop();
+  phase = "entropy";
+  lastPairInfo = "Removed last entropy word.";
+  render();
+}
+
+function resetGame() {
+  seedWords = [];
+  seedIndices = [];
+  phase = "entropy";
+  lastPairInfo = "";
+  revealed = false;
+  resetSelections();
+  render();
+}
+
+function render() {
+  const n = seedWords.length;
+  const status = document.getElementById("statusLine");
+  const audit = document.getElementById("pairAudit");
+  const list = document.getElementById("wordList");
+  const box = document.getElementById("checksumBox");
+  const ta = document.getElementById("seedPhraseText");
+  const validEl = document.getElementById("validFlag");
+  const card = document.getElementById("wordCard");
+  const hasPair = !!(selected.blueSuit && selected.blueRank && selected.orangeSuit && selected.orangeRank);
+
+  document.getElementById("w12").disabled = n > 0;
+  document.getElementById("w24").disabled = n > 0;
+  document.getElementById("confirmPair").disabled = !(phase === "entropy" && hasPair && n < entropyWordTarget);
+  document.getElementById("confirmChecksum").disabled = !(phase === "checksum" && hasPair);
+  document.getElementById("redoBtn").disabled = n === 0 || phase === "done";
+  document.getElementById("revealBtn").disabled = phase !== "done";
+  document.getElementById("copyBtn").disabled = phase !== "done" || !revealed;
+
+  document.getElementById("modeNote").textContent =
+    entropyWordTarget === 11
+      ? "12-word phrase. Enter 11 entropy pairs, then one checksum pair. Length is locked after the first pair."
+      : "24-word phrase. Enter 23 entropy pairs, then one checksum pair. Length is locked after the first pair.";
+
+  if (phase === "entropy") {
+    status.textContent = "Entropy words: " + n + " / " + entropyWordTarget +
+      "  ·  finished phrase will have " + seedWordCount() + " words";
+  } else if (phase === "checksum") {
+    status.textContent = "Entropy complete. Draw one more pair for the checksum word.";
+  } else {
+    status.textContent = "Done. " + seedWordCount() + "-word BIP-39 phrase.";
+  }
+  audit.textContent = lastPairInfo;
+
+  if (!n) {
+    list.innerHTML = '<p class="placeholder">No pairs yet.</p>';
+  } else {
+    list.innerHTML = '<div class="wordcard">' + seedWords.map((w, i) =>
+      '<div class="word"><span class="n">' + (i + 1) + '</span><span>' +
+      (phase === "done" && !revealed ? "••••••" : w) +
+      '</span><span class="idx">#' + seedIndices[i] + '</span></div>'
+    ).join("") + '</div>';
+  }
+
+  ta.value = seedWords.join(" ");
+
+  if (phase === "checksum") {
+    box.hidden = false;
+    box.innerHTML = entropyWordTarget === 11
+      ? "<h3>Checksum pair</h3><p>You have 11 × 11 = <b>121 bits</b>. A 12-word seed needs <b>128 bits of entropy + 4 checksum bits</b>.</p><p>Select the 12th physical pair. This page keeps the <b>top 7 bits</b> of that pair index as extra entropy, then sets the last 4 bits from SHA-256(entropy). The last word will usually differ from the raw pair word.</p>"
+      : "<h3>Checksum pair</h3><p>You have 23 × 11 = <b>253 bits</b>. A 24-word seed needs <b>256 bits of entropy + 8 checksum bits</b>.</p><p>Select the 24th pair. This page keeps the <b>top 3 bits</b> of that pair index, then fills 8 checksum bits from SHA-256(entropy).</p>";
+  } else if (phase === "done") {
+    box.hidden = false;
+    const ok = isValidMnemonic(seedWords);
+    box.innerHTML = ok
+      ? "<h3>Checksum pair</h3><p>Checksum matches. This is a valid BIP-39 mnemonic. Write the words on paper, then wipe.</p>"
+      : "<h3>Checksum pair</h3><p>Internal check failed. Reset and start again.</p>";
+    validEl.className = ok ? "okbox" : "warnbox";
+    validEl.textContent = ok ? "VALID BIP-39" : "INTERNAL CHECK FAILED";
+    card.className = "wordcard" + (revealed ? "" : " blurred");
+    card.innerHTML = seedWords.map((w, i) =>
+      '<div class="word"><span class="n">' + (i + 1) + '</span><span>' + w + '</span></div>'
+    ).join("");
+  } else {
+    box.hidden = true;
+    validEl.className = "";
+    validEl.textContent = "";
+    card.innerHTML = "";
+  }
+}
+
+function bindDeck(deckEl, deck, kind) {
+  deckEl.querySelectorAll("button").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const key = deck + (kind === "suit" ? "Suit" : "Rank");
+      const value = kind === "suit" ? btn.dataset.suit : btn.dataset.rank;
+      selected[key] = value;
+      deckEl.querySelectorAll("button").forEach(b => b.classList.remove("on"));
+      btn.classList.add("on");
+      render();
+    });
+  });
+}
+
+const TESTS = [
+  ["SHA-256 empty string", () =>
+    hex(sha256str("")) === "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"],
+  ["SHA-256 \"abc\"", () =>
+    hex(sha256str("abc")) === "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad"],
+  ["wordlist has 2048 entries", () => WORDS.length === 2048],
+  ["wordlist digest matches BIP-39 english.txt", () =>
+    hex(sha256str(WORDS.join("\n") + "\n")) === "2f5eed53a4727b4bf8880d8f3f199efc90e58503646d9ff8eff3a2ed3b24dbda"],
+  ["index 0 is abandon, 3 is about, 2047 is zoo", () =>
+    WORDS[0] === "abandon" && WORDS[3] === "about" && WORDS[2047] === "zoo"],
+  ["pair A♥+A♥ → 0 abandon", () =>
+    pairToIndex(getCardIndex("blue","♥","A"), getCardIndex("orange","♥","A")) === 0],
+  ["pair A♥+4♥ → 3 about", () =>
+    pairToIndex(getCardIndex("blue","♥","A"), getCardIndex("orange","♥","4")) === 3],
+  ["pair 8♠+KX♠ → 2047 zoo", () =>
+    pairToIndex(getCardIndex("blue","♠","8"), getCardIndex("orange","♠","KX")) === 2047],
+  ["BIP-39 vector 128-bit zero", () => {
+    const words = [];
+    for (let i = 0; i < 11; i++) words.push(WORDS[0]);
+    words.push(WORDS[3]);
+    return isValidMnemonic(words) && words.join(" ") ===
+      "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about";
+  }],
+  ["BIP-39 vector 256-bit zero", () => {
+    const words = [];
+    for (let i = 0; i < 23; i++) words.push(WORDS[0]);
+    words.push(WORDS[102]);
+    return isValidMnemonic(words) && words[23] === "art";
+  }],
+  ["12-word checksum from pair 0 on eleven zeros → about", () => {
+    seedIndices = [0,0,0,0,0,0,0,0,0,0,0];
+    entropyWordTarget = 11;
+    const r = computeChecksumWord(0);
+    seedIndices = [];
+    entropyWordTarget = 11;
+    return r.lastWord === "about" && r.lastIndex === 3;
+  }],
+  ["page source does not call a browser RNG", () => {
+    const src = document.documentElement.innerHTML;
+    const a = "Math" + ".random(";
+    const b = "getRandom" + "Values(";
+    return src.split(a).length === 1 && src.split(b).length === 1;
+  }]
+];
+
+function runSelfTest() {
+  const lines = [];
+  let pass = 0;
+  for (const [name, fn] of TESTS) {
+    let ok = false, err = "";
+    try { ok = !!fn(); } catch (e) { err = String(e); }
+    if (ok) pass++;
+    lines.push((ok ? "ok  " : "FAIL  ") + name + (err ? "  " + err : ""));
+  }
+  const bar = document.getElementById("stBar");
+  const text = document.getElementById("stText");
+  const detail = document.getElementById("testDetail");
+  if (pass === TESTS.length) {
+    bar.classList.remove("fail");
+    text.textContent = "Self-test " + pass + " / " + TESTS.length + " passed. This copy is usable.";
+  } else {
+    bar.classList.add("fail");
+    text.textContent = "Self-test " + pass + " / " + TESTS.length + " — do not use this copy.";
+  }
+  detail.textContent = lines.join("\n");
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  bindDeck(document.getElementById("blueSuits"), "blue", "suit");
+  bindDeck(document.getElementById("blueRanks"), "blue", "rank");
+  bindDeck(document.getElementById("orangeSuits"), "orange", "suit");
+  bindDeck(document.getElementById("orangeRanks"), "orange", "rank");
+  document.getElementById("w12").onclick = () => setLength(11);
+  document.getElementById("w24").onclick = () => setLength(23);
+  document.getElementById("confirmPair").onclick = confirmEntropyPair;
+  document.getElementById("confirmChecksum").onclick = confirmChecksumPair;
+  document.getElementById("redoBtn").onclick = redoLastWord;
+  document.getElementById("resetBtn").onclick = resetGame;
+  document.getElementById("wipeBtn").onclick = resetGame;
+  document.getElementById("revealBtn").onclick = () => { revealed = true; render(); };
+  document.getElementById("copyBtn").onclick = () => {
+    const el = document.getElementById("seedPhraseText");
+    el.hidden = false;
+    el.select();
+    try { document.execCommand("copy"); } catch (e) {}
+    el.hidden = true;
+  };
+  const howto = document.getElementById("howto");
+  document.getElementById("howtoOpen").onclick = () => { howto.hidden = false; };
+  document.getElementById("howtoClose").onclick = () => { howto.hidden = true; };
+  howto.addEventListener("click", e => { if (e.target === howto) howto.hidden = true; });
+  document.getElementById("stToggle").onclick = () => {
+    const d = document.getElementById("testDetail");
+    d.hidden = !d.hidden;
+  };
+  runSelfTest();
+  render();
+});
+</script>
+
+</body>
+</html>

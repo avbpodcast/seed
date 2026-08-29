@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AVB 52 card generator · v1.0.0</title>
+<style>
+:root{
+  --paper:#F7F5EF; --grid:#E4E1D6; --ink:#191B1F; --ink-soft:#61645F;
+  --felt:#1E5B4A; --felt-soft:#E2EDE8; --red:#A8352A;
+  --sans:"Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua", Georgia, serif;
+  --mono:"IBM Plex Mono", "Source Code Pro", ui-monospace, monospace;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:
+  linear-gradient(var(--grid) 1px, transparent 1px),
+  linear-gradient(90deg, var(--grid) 1px, transparent 1px),
+  var(--paper);
+  background-size:24px 24px; color:var(--ink); font-family:var(--sans)}
+body{min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:36px 16px 64px}
+main{width:min(640px,100%)}
+.sheet{background:var(--paper);border:1.5px solid var(--ink);padding:22px 24px;margin-bottom:14px}
+h1{font-size:1.15rem;letter-spacing:.04em;margin:0 0 8px;font-weight:700}
+.pip{letter-spacing:.15em;font-size:.95rem}
+.v{font-family:var(--mono);font-size:.72rem;letter-spacing:.06em;color:var(--ink-soft);font-weight:500;margin-left:8px}
+.sub{margin:0;color:var(--ink-soft);font-size:.92rem;line-height:1.45}
+.pick{display:grid;grid-template-columns:1fr 1fr;gap:0;border:1.5px solid var(--ink);margin-top:18px}
+.pick a{
+  display:block;padding:22px 18px;text-decoration:none;color:var(--ink);
+  background:var(--paper);min-height:168px;
+}
+.pick a+a{border-left:1.5px solid var(--ink)}
+.pick a:hover{background:var(--ink);color:var(--paper)}
+.pick a:hover .who,.pick a:hover .does{color:#D4D1C6}
+.pick b{display:block;font-family:var(--mono);font-size:.78rem;letter-spacing:.08em;text-transform:uppercase;margin-bottom:8px}
+.who{display:block;font-size:.95rem;line-height:1.35;margin-bottom:8px}
+.does{display:block;font-size:.82rem;color:var(--ink-soft);line-height:1.4}
+.note{margin-top:16px;font-size:.84rem;color:var(--ink-soft);line-height:1.45}
+@media (max-width:560px){
+  .pick{grid-template-columns:1fr}
+  .pick a+a{border-left:none;border-top:1.5px solid var(--ink)}
+}
+
+
+.back{
+  display:inline-block;font-family:var(--mono);font-size:.72rem;letter-spacing:.04em;
+  color:var(--ink-soft);text-decoration:none;border-bottom:1px solid var(--grid);
+  margin:0 0 10px
+}
+.back:hover{color:var(--ink);border-bottom-color:var(--ink)}
+.sitefoot{
+  margin-top:18px;padding:10px 4px 0;
+  font-family:var(--mono);font-size:.72rem;letter-spacing:.04em;
+  color:var(--ink-soft);display:flex;flex-wrap:wrap;gap:8px 20px;
+  justify-content:center;text-align:center;width:100%
+}
+.sitefoot a{color:var(--ink-soft);text-decoration:none;border-bottom:1px solid var(--grid)}
+.sitefoot a:hover{color:var(--ink);border-bottom-color:var(--ink)}
+</style>
+</head>
+<body>
+<main>
+<header class="sheet">
+  <a class="back" href="../create-seed.html">← sources</a>
+  
+  <h1>AVB 52 CARD GENERATOR <span class="pip">&#9824;&#9827;</span><span class="pip" style="color:var(--red)">&#9829;&#9830;</span> <span class="v">v1.0.0 · choose a file</span></h1>
+  <p class="sub">One shuffled deck. Offline. Two files on purpose — pick the stop line that matches how you back up.</p>
+  <div class="pick">
+    <a href="avb-52-card-generator_v1.0.0-basic.html">
+      <b>Basic</b>
+      <span class="who">You write the words on paper or steel, then restore on another device.</span>
+      <span class="does">12 or 24 words from the deal. No addresses. No QR. No keys in this page.</span>
+    </a>
+    <a href="avb-52-card-generator_v1.0.0-full.html">
+      <b>Full</b>
+      <span class="who">You want the first receive addresses and a SeedQR before you leave the machine.</span>
+      <span class="does">Same ritual, then three bc1 addresses, the account zpub, and a SeedQR. Treat that screen as the seed.</span>
+    </a>
+  </div>
+  <p class="note">Open the file you picked. Save that single HTML to the offline machine. Both files use the same card ritual. Eighteen-word phrases are not offered.</p>
+</header>
+<footer class="sitefoot">
+  <span>v1.0.0</span>
+  <a href="https://allesvoorbitcoin.be/21tools" target="_blank" rel="noopener noreferrer">allesvoorbitcoin.be/21tools</a>
+  <a href="https://github.com/avbpodcast" target="_blank" rel="noopener noreferrer">GitHub</a>
+  <a href="https://coinos.io/pay/Mr21" target="_blank" rel="noopener noreferrer">value for value</a>
+</footer>
+</main>
+
+</body>
+</html>

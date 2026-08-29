@@ -1,0 +1,4236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SeedPhrasePoker · v1.0.0 Full</title>
+<style>
+:root{
+  --paper:#F7F5EF; --grid:#E4E1D6; --ink:#191B1F; --ink-soft:#61645F;
+  --bit:#1F4E5F; --bit-soft:#E3EDF0; --stamp:#A8352A; --stamp-soft:#F6E8E5;
+  --amber:#C56A16; --amber-soft:#F6E7D4;
+  --ok:#2C6E49; --ok-soft:#E4F0E8;
+  --blue:#1F4E5F; --blue-soft:#E3EDF0;
+  --orange:#C56A16; --orange-soft:#F6E7D4;
+  --mono:ui-monospace,"SF Mono","Cascadia Mono",Consolas,Menlo,monospace;
+  --sans:system-ui,-apple-system,"Segoe UI",sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{background:var(--paper)}
+body{
+  font-family:var(--sans);color:var(--ink);line-height:1.55;
+  background:linear-gradient(var(--grid) 1px,transparent 1px),
+             linear-gradient(90deg,var(--grid) 1px,transparent 1px);
+  background-size:26px 26px;background-color:var(--paper);
+  min-height:100vh;padding:28px 16px 72px;
+}
+main{max-width:760px;margin:0 auto}
+.sheet{background:var(--paper);border:1.5px solid var(--ink);box-shadow:4px 4px 0 rgba(25,27,31,.11);padding:22px;margin-bottom:20px}
+h1{font-family:var(--mono);font-size:1.28rem;letter-spacing:-.01em;font-weight:700}
+h1 .v{color:var(--ink-soft);font-weight:400;font-size:.8rem}
+.sub{color:var(--ink-soft);font-size:.9rem;margin-top:6px;max-width:58ch}
+h2{font-family:var(--mono);font-size:.76rem;letter-spacing:.11em;text-transform:uppercase;color:var(--ink-soft);margin-bottom:13px}
+h2 .step{display:inline-block;border:1.5px solid var(--ink);width:21px;height:21px;line-height:19px;text-align:center;color:var(--ink);margin-right:8px;font-size:.72rem}
+.selftest{font-family:var(--mono);font-size:.78rem;border:1.5px solid var(--ok);background:var(--ok-soft);color:var(--ok);padding:9px 13px;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.selftest.fail{border-color:var(--stamp);background:var(--stamp-soft);color:var(--stamp)}
+.selftest button{font-family:inherit;font-size:inherit;color:inherit;background:none;border:1px solid currentColor;padding:2px 8px;cursor:pointer}
+#testDetail{font-family:var(--mono);font-size:.75rem;color:var(--ink-soft);margin-top:11px;white-space:pre-wrap}
+.toggle{display:flex;margin-bottom:10px;font-family:var(--mono);font-size:.82rem}
+.toggle button{flex:1;padding:9px 6px;border:1.5px solid var(--ink);background:var(--paper);cursor:pointer;font-family:inherit;font-size:inherit;color:var(--ink);line-height:1.3}
+.toggle button+button{border-left:none}
+.toggle button.on{background:var(--ink);color:var(--paper)}
+.toggle button:disabled{opacity:.45;cursor:default}
+.toggle button:focus-visible{outline:2px solid var(--bit);outline-offset:2px}
+.modenote{background:var(--bit-soft);border-left:3px solid var(--bit);padding:11px 14px;font-size:.87rem;margin:14px 0 0}
+.deck{padding:16px;border:1.5px solid var(--ink);margin-top:12px}
+.deck.blue{background:var(--blue-soft);border-color:var(--blue)}
+.deck.orange{background:var(--orange-soft);border-color:var(--orange)}
+.deck h3{font-family:var(--mono);font-size:.95rem;margin-bottom:10px}
+.btns{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.ranklab{font-family:var(--mono);font-size:.72rem;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-soft);margin:12px 0 4px}
+.xrow{background:var(--amber-soft);border:1.5px dashed var(--amber);padding:8px;margin-top:0}
+.xrow button{min-width:64px;font-weight:700}
+.btns button{
+  font-family:var(--mono);font-size:.9rem;min-width:42px;
+  border:1.5px solid var(--ink);background:var(--paper);color:var(--ink);
+  padding:7px 10px;cursor:pointer;
+}
+.btns button.hearts,.btns button.diamonds{color:#A8352A}
+.btns button.on{background:var(--ink);color:var(--paper)}
+.btns button.on.hearts,.btns button.on.diamonds{background:#A8352A;border-color:#A8352A;color:#fff}
+.btns button[data-suit]{
+  font-family:"Segoe UI Symbol","Apple Symbols","Noto Sans Symbols 2","Noto Sans Symbols",DejaVu Sans,var(--sans);
+  font-size:1.35rem;
+  min-width:56px;
+  min-height:48px;
+  padding:8px 12px;
+  line-height:1;
+  font-variant-emoji:text;
+}
+.rowbtn{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap}
+.rowbtn button,.helpbtn{
+  font-family:var(--mono);font-size:.78rem;border:1.5px solid var(--ink);
+  background:var(--paper);color:var(--ink);padding:6px 12px;cursor:pointer
+}
+.bigbtn{display:block;width:100%;margin-top:12px;font-family:var(--mono);font-size:.86rem;letter-spacing:.03em;
+  border:1.5px solid var(--bit);background:var(--bit);color:var(--paper);padding:13px;cursor:pointer;line-height:1.45}
+.bigbtn.amber{border-color:var(--amber);background:var(--amber);color:#fff}
+.bigbtn:disabled{border-color:#C9C6BA;background:#EDEBE4;color:var(--ink-soft);cursor:default}
+.audit{font-family:var(--mono);font-size:.78rem;color:var(--ink-soft);margin-top:10px;min-height:1.3em}
+.wordcard{display:grid;grid-template-columns:repeat(auto-fill,minmax(155px,1fr));gap:8px;margin-top:10px}
+.word{border:1px solid var(--grid);border-bottom:1.5px solid var(--ink);padding:7px 10px;font-family:var(--mono);font-size:.94rem;display:flex;gap:9px;background:#fff}
+.word .n{color:var(--ink-soft);font-size:.72rem;width:2ch;text-align:right;flex-shrink:0;padding-top:3px}
+.word .idx{color:var(--ink-soft);font-size:.7rem;margin-left:auto}
+.wordcard.blurred .word span:not(.n){filter:blur(8px);user-select:none}
+.placeholder{color:var(--ink-soft);font-size:.88rem;font-style:italic}
+.phase{background:var(--amber-soft);border-left:3px solid var(--amber);padding:12px 14px;font-size:.88rem;margin-top:12px}
+.phase h3{font-family:var(--mono);font-size:.8rem;letter-spacing:.06em;text-transform:uppercase;margin-bottom:8px}
+.okbox{border:1.5px solid var(--ok);background:var(--ok-soft);color:var(--ok);font-family:var(--mono);font-size:.78rem;padding:9px 13px;margin-top:10px}
+.warnbox{border:1.5px solid var(--stamp);background:var(--stamp-soft);color:var(--stamp);font-family:var(--mono);font-size:.78rem;padding:9px 13px;margin-top:10px}
+textarea{width:100%;min-height:88px;font-family:var(--mono);font-size:1rem;letter-spacing:.04em;line-height:1.7;
+  border:1.5px solid var(--ink);background:#fff;padding:13px;resize:vertical;color:var(--ink);margin-top:8px}
+.notes{font-size:.86rem;color:var(--ink-soft)}
+.notes p{margin-bottom:9px}
+.notes p:last-child{margin-bottom:0}
+.notes strong{color:var(--ink)}
+.notes a{color:var(--ink);text-decoration:none;border-bottom:1px solid var(--grid)}
+.notes a:hover{border-bottom-color:var(--ink)}
+
+.notes ul{margin:8px 0 8px 18px}
+.notes li{margin-bottom:4px}
+.overlay{position:fixed;inset:0;background:rgba(25,27,31,.45);z-index:20;display:flex;align-items:flex-start;justify-content:center;padding:28px 16px;overflow:auto}
+.overlay[hidden]{display:none}
+.sheetpop{background:var(--paper);border:1.5px solid var(--ink);box-shadow:6px 6px 0 rgba(25,27,31,.16);max-width:640px;width:100%;padding:20px}
+.sheetpop h3{font-family:var(--mono);font-size:.95rem;margin-bottom:10px}
+.sheetpop h4{font-family:var(--mono);font-size:.8rem;margin:14px 0 6px}
+.stamp{font-family:var(--mono);font-size:.72rem;color:var(--ink-soft);margin-top:16px}
+kbd{font-family:var(--mono);border:1px solid var(--ink);padding:0 5px;font-size:.78rem}
+
+.deallabel{font-family:var(--mono);font-size:.84rem;margin:12px 0 8px;color:var(--ink)}
+.stampbox{border:1.5px solid var(--stamp);background:var(--stamp-soft);color:var(--stamp);
+  font-family:var(--mono);font-size:.78rem;letter-spacing:.03em;padding:10px 13px;margin-bottom:14px;text-transform:uppercase}
+.walletbox .mono{font-family:var(--mono);font-size:.78rem;word-break:break-all;background:#fff;border:1px solid var(--grid);padding:10px 12px}
+.walletbox .addr{font-family:var(--mono);font-size:.82rem;border-bottom:1px solid var(--grid);padding:7px 0;display:flex;gap:10px;flex-wrap:wrap}
+.walletbox .addr .i{color:var(--ink-soft);width:3ch}
+.walletbox .addr .p{color:var(--ink-soft);font-size:.7rem;margin-left:auto}
+.seedqr-svg{width:220px;height:220px;background:#fff;border:1.5px solid var(--ink)}
+.sq-warn{border:1.5px solid var(--amber);background:var(--amber-soft);color:var(--amber);padding:10px 12px;font-size:.84rem;margin:10px 0}
+@media (max-width:600px){
+  .sheet{padding:17px}
+  .btns button{min-width:36px;min-height:44px;padding:8px 8px}
+  .btns button[data-suit]{font-size:1.28rem;min-width:52px;min-height:46px;padding:8px 10px}
+  .xrow button{min-width:64px}
+}
+
+
+.back{
+  display:inline-block;font-family:var(--mono);font-size:.72rem;letter-spacing:.04em;
+  color:var(--ink-soft);text-decoration:none;border-bottom:1px solid var(--grid);
+  margin:0 0 10px
+}
+.back:hover{color:var(--ink);border-bottom-color:var(--ink)}
+.sitefoot{
+  margin-top:18px;padding:10px 4px 0;
+  font-family:var(--mono);font-size:.72rem;letter-spacing:.04em;
+  color:var(--ink-soft);display:flex;flex-wrap:wrap;gap:8px 20px;
+  justify-content:center;text-align:center;width:100%
+}
+.sitefoot a{color:var(--ink-soft);text-decoration:none;border-bottom:1px solid var(--grid)}
+.sitefoot a:hover{color:var(--ink);border-bottom-color:var(--ink)}
+</style>
+</head>
+<body>
+<main>
+
+<header class="sheet">
+  <a class="back" href="seedphrase-poker-v1.0.0.html">← choose a file</a>
+  
+  <h1>SEEDPHRASE POKER <span class="v">v1.0.0 · Full</span></h1>
+  <p class="sub">Same ritual as Basic, then the first three native SegWit addresses, the account zpub, and a SeedQR. No network. No Web Crypto. Do not screenshot the QR.</p>
+</header>
+
+<section class="sheet">
+  <div class="selftest" id="stBar">
+    <span id="stText">running self-test…</span>
+    <button id="stToggle" type="button">details</button>
+  </div>
+  <div id="testDetail" hidden></div>
+</section>
+
+<section class="sheet" id="setup">
+  <h2><span class="step">1</span>Set the length before the first pair</h2>
+  <div class="toggle" role="group" aria-label="Phrase length">
+    <button id="w12" class="on" type="button">12 words<br><small>11 entropy pairs + checksum pair</small></button>
+    <button id="w24" type="button">24 words<br><small>23 entropy pairs + checksum pair</small></button>
+  </div>
+  <div class="modenote" id="modeNote"></div>
+  <div class="rowbtn">
+    <button class="helpbtn" id="howtoOpen" type="button">How the decks work</button>
+  </div>
+</section>
+
+<section class="sheet" id="draw">
+  <h2><span class="step">2</span>Enter the pair you just drew</h2>
+
+  <div class="deck blue" id="blueDeck">
+    <h3>Blue deck — 32 cards (A–8 of each suit)</h3>
+    <div class="btns" id="blueSuits">
+      <button type="button" class="hearts" data-suit="♥">♥︎</button>
+      <button type="button" class="diamonds" data-suit="♦">♦︎</button>
+      <button type="button" data-suit="♣">♣︎</button>
+      <button type="button" data-suit="♠">♠︎</button>
+    </div>
+    <div class="btns" id="blueRanks">
+      <button type="button" data-rank="A">A</button>
+      <button type="button" data-rank="2">2</button>
+      <button type="button" data-rank="3">3</button>
+      <button type="button" data-rank="4">4</button>
+      <button type="button" data-rank="5">5</button>
+      <button type="button" data-rank="6">6</button>
+      <button type="button" data-rank="7">7</button>
+      <button type="button" data-rank="8">8</button>
+    </div>
+  </div>
+
+  <div class="deck orange" id="orangeDeck">
+    <h3>Orange deck — 64 cards (full 52 + 12 marked face cards)</h3>
+    <div class="btns" id="orangeSuits">
+      <button type="button" class="hearts" data-suit="♥">♥︎</button>
+      <button type="button" class="diamonds" data-suit="♦">♦︎</button>
+      <button type="button" data-suit="♣">♣︎</button>
+      <button type="button" data-suit="♠">♠︎</button>
+    </div>
+    <div id="orangeRanks">
+      <div class="btns">
+        <button type="button" data-rank="A">A</button>
+        <button type="button" data-rank="2">2</button>
+        <button type="button" data-rank="3">3</button>
+        <button type="button" data-rank="4">4</button>
+        <button type="button" data-rank="5">5</button>
+        <button type="button" data-rank="6">6</button>
+        <button type="button" data-rank="7">7</button>
+        <button type="button" data-rank="8">8</button>
+        <button type="button" data-rank="9">9</button>
+        <button type="button" data-rank="10">10</button>
+        <button type="button" data-rank="J">J</button>
+        <button type="button" data-rank="Q">Q</button>
+        <button type="button" data-rank="K">K</button>
+      </div>
+      <p class="ranklab">Marked X — the twelve extra face cards</p>
+      <div class="btns xrow">
+        <button type="button" data-rank="JX">JX</button>
+        <button type="button" data-rank="QX">QX</button>
+        <button type="button" data-rank="KX">KX</button>
+      </div>
+    </div>
+  </div>
+
+  <button class="bigbtn" id="confirmPair" type="button" disabled>Confirm entropy pair</button>
+  <button class="bigbtn amber" id="confirmChecksum" type="button" disabled>Confirm checksum pair</button>
+  <div class="rowbtn">
+    <button type="button" id="redoBtn" disabled>Redo last entropy word</button>
+    <button type="button" id="resetBtn">Reset</button>
+  </div>
+  <div class="audit" id="statusLine"></div>
+  <div class="audit" id="pairAudit"></div>
+</section>
+
+<section class="sheet" id="words">
+  <h2><span class="step">3</span>Words so far</h2>
+  <div id="wordList"><p class="placeholder">No pairs yet.</p></div>
+  <div id="checksumBox" class="phase" hidden></div>
+</section>
+
+<section class="sheet" id="phraseBox">
+  <h2><span class="step">4</span>Finished phrase</h2>
+  <div id="validFlag"></div>
+  <div id="wordCard" class="wordcard blurred"></div>
+  <textarea id="seedPhraseText" readonly hidden></textarea>
+  <div class="rowbtn">
+    <button type="button" id="revealBtn" disabled>Show words</button>
+    <button type="button" id="copyBtn" disabled>Copy</button>
+    <button type="button" id="wipeBtn">Wipe</button>
+  </div>
+</section>
+
+
+<section class="sheet walletbox" id="walletSheet" hidden>
+  <h2><span class="step">5</span>Wallet preview · BIP-84</h2>
+  <p class="sub" style="margin:0 0 12px">Same derivation as the Dice → Seed and AVB 52 Full files: native SegWit (bech32), account zpub, and a Standard SeedQR. No passphrase. Computed in this browser. Do not screenshot the QR.</p>
+  <button class="bigbtn" id="walletBuild" type="button" hidden>Build bech32 addresses, zpub and SeedQR<small>first three receive addresses at m/84'/0'/0'/0/0–2 · no network, no Web Crypto</small></button>
+  <p class="placeholder" id="walletWait">Unblur the words first. This section opens after you show the phrase.</p>
+  <div id="walletOut" hidden>
+    <p class="deallabel">zpub · m/84'/0'/0'</p>
+    <div class="mono" id="walletZpub"></div>
+    <p class="deallabel">First three bech32 receive addresses</p>
+    <div id="walletAddrs"></div>
+    <div class="sq-warn">The SeedQR is the seed. Reveal it only on an offline machine. Scan only with an offline signer such as SeedSigner.</div>
+    <button class="bigbtn" id="walletQrBtn" type="button" style="background:var(--paper);color:var(--bit)">Reveal SeedQR</button>
+    <div id="walletQr" style="margin-top:12px"></div>
+  </div>
+</section>
+
+<section class="sheet notes">
+  <h2>Notes</h2>
+  <p>Index formula: <strong>word index = blue × 64 + orange</strong>, range 0–2047. Suits in order ♥ ♦ ♣ ♠. Blue ranks A 2 3 4 5 6 7 8. Orange ranks A 2 3 4 5 6 7 8 9 10 J Q K JX QX KX.</p>
+  <p>Printed pair lists live next to this file: <a href="seedphrase-poker-pairs-0based.pdf">seedphrase-poker-pairs-0based.pdf</a> (numbers 0–2047, same as this page) and <a href="seedphrase-poker-pairs-1based.pdf">seedphrase-poker-pairs-1based.pdf</a> (same pairs, numbers 1–2048). Pick one booklet and stay with it. The older GitHub start0 / start1 lists use the same pairs.</p>
+  <p>The last physical pair is not copied as a word. This page keeps the top 7 bits (12-word) or top 3 bits (24-word) and fills the checksum from SHA-256 of the entropy. That last word will usually differ from the raw pair word.</p>
+  <p><strong>This is the Full file.</strong> After the phrase, it can show bech32 addresses, zpub, and SeedQR. Those steps put keys in this page’s memory. If you only need the words, use Basic.</p>
+  <p>Write the words on paper. Restore on a hardware wallet or a second BIP-39 tool and confirm the same first receive address before any coins move.</p>
+  <p class="stamp">v1.0.0 Full · offline file · no storage · no network</p>
+</section>
+
+
+<section class="sheet notes">
+  <h2>Wipe this tab</h2>
+  <p>This file never writes localStorage, cookies, or a server. The browser can still keep the last form and the words in RAM. This button clears what the page can reach, then reloads.</p>
+  <button class="bigbtn" id="wipeTabBtn" type="button" style="background:var(--stamp);border-color:var(--stamp)">Wipe words and keys in this tab</button>
+</section>
+
+<footer class="sitefoot">
+  <span>v1.0.0</span>
+  <a href="https://allesvoorbitcoin.be/21tools" target="_blank" rel="noopener noreferrer">allesvoorbitcoin.be/21tools</a>
+  <a href="https://github.com/avbpodcast" target="_blank" rel="noopener noreferrer">GitHub</a>
+  <a href="https://coinos.io/pay/Mr21" target="_blank" rel="noopener noreferrer">value for value</a>
+</footer>
+</main>
+
+<div class="overlay" id="howto" hidden>
+  <div class="sheetpop" role="dialog" aria-labelledby="howtoTitle">
+    <h3 id="howtoTitle">How the decks work</h3>
+    <p class="notes">Use two standard 52-card decks of the same size. Leave jokers out. A pencil marks twelve extra face cards.</p>
+    <h4>Blue deck — 32 cards</h4>
+    <p class="notes">From deck 1 keep only Ace through 8 of every suit. Set the rest aside. The twelve face cards (J Q K of each suit) go to the orange deck later.</p>
+    <h4>Orange deck — 64 cards</h4>
+    <p class="notes">Take deck 2 in full. From the leftover face cards of deck 1, mark each Jack, Queen and King with a clear X. A Jack of Hearts and a Jack of Hearts X are two different cards. Add those twelve marked cards to deck 2.</p>
+    <h4>Shuffle and draw</h4>
+    <p class="notes">Shuffle each deck on its own. Seven or more riffle shuffles per deck is a reasonable minimum. Blue face-down on the left, orange on the right.</p>
+    <p class="notes">Preferred rhythm: after every pair, return both cards and shuffle again. Repeats are allowed in BIP-39. Faster rhythm: one thorough shuffle, then deal without replacement. Do not do that for 23 entropy words from a 32-card blue deck — you run out of blue cards. Shuffle again if the blue pile is empty.</p>
+    <p class="notes">Each draw is the top blue card plus the top orange card. Enter that pair here, or look it up in the printed booklet. Do this 11 times for a 12-word phrase, or 23 times for 24 words. Those are entropy words only.</p>
+    <p class="notes">The 0-based booklet matches the #index this page prints. The 1-based booklet is the same list with every number raised by one. Do not mix them.</p>
+    <h4>Checksum pair</h4>
+    <p class="notes">A 12-word phrase is 128 bits of entropy plus a 4-bit SHA-256 checksum. Eleven pairs give 121 bits, so you still need 7 entropy bits and 4 checksum bits. A 24-word phrase is 256 + 8; twenty-three pairs give 253 bits, so you still need 3 + 8.</p>
+    <p class="notes">Draw one extra pair. This page keeps only the missing entropy bits from that pair and fills the checksum bits from SHA-256. Cards alone cannot compute that hash. The printed last word is the BIP-39 word, not the raw pair word.</p>
+    <p class="notes">If you would rather not use this file for the last word, enter the 11 or 23 entropy words plus a candidate last word on an air-gapped hardware wallet. If it rejects the phrase, discard only the last pair and draw again. Chance of a hit: 1 in 16 for 12 words, 1 in 256 for 24 words.</p>
+    <p class="notes">Do not invent the last word, and do not pick a favourite from the valid endings.</p>
+    <div class="rowbtn"><button type="button" id="howtoClose">Close</button></div>
+  </div>
+</div>
+
+<script>
+
+/*! noble-secp256k1 - MIT License (c) 2019 Paul Miller (paulmillr.com) */
+/**
+ * 4KB JS implementation of secp256k1 signatures & ECDH. Compliant with RFC6979.
+ * @module
+ */
+const B256 = 2n ** 256n;
+const P = B256 - 0x1000003d1n; // curve's field prime
+const N = B256 - 0x14551231950b75fc4402da1732fc9bebfn; // curve (group) order
+const Gx = 0x79be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798n; // base point x
+const Gy = 0x483ada7726a3c4655da4fbfc0e1108a8fd17b448a68554199c47d08ffb10d4b8n; // base point y
+/**
+ * secp256k1 curve parameters. Equation is x³ + ax + b.
+ * Gx and Gy are generator coordinates. p is field order, n is group order.
+ */
+const CURVE = {
+    p: P, n: N, a: 0n, b: 7n, Gx, Gy
+}; // exported variables incl. a, b
+const fLen = 32; // field / group byte length
+const curve = (x) => M(M(x * x) * x + CURVE.b); // x³ + ax + b weierstrass formula; a=0
+const err = (m = '') => { throw new Error(m); }; // error helper, messes-up stack trace
+const isB = (n) => typeof n === 'bigint'; // is big integer
+const isS = (s) => typeof s === 'string'; // is string
+const fe = (n) => isB(n) && 0n < n && n < P; // is field element (invertible)
+const ge = (n) => isB(n) && 0n < n && n < N; // is group element
+const isu8 = (a) => (a instanceof Uint8Array || (ArrayBuffer.isView(a) && a.constructor.name === 'Uint8Array'));
+const au8 = (a, l) => // assert is Uint8Array (of specific length)
+ !isu8(a) || (typeof l === 'number' && l > 0 && a.length !== l) ?
+    err('Uint8Array expected') : a;
+const u8n = (data) => new Uint8Array(data); // creates Uint8Array
+const toU8 = (a, len) => au8(isS(a) ? h2b(a) : u8n(au8(a)), len); // norm(hex/u8a) to u8a
+const M = (a, b = P) => {
+    const r = a % b;
+    return r >= 0n ? r : b + r;
+};
+const aPoint = (p) => (p instanceof Point ? p : err('Point expected')); // is 3d point
+/** Point in 3d xyz projective coordinates. 3d takes less inversions than 2d. */
+class Point {
+    constructor(px, py, pz) {
+        this.px = px;
+        this.py = py;
+        this.pz = pz;
+        Object.freeze(this);
+    }
+    /** Create 3d xyz point from 2d xy. (0, 0) => (0, 1, 0), not (0, 0, 1) */
+    static fromAffine(p) {
+        return ((p.x === 0n) && (p.y === 0n)) ? I : new Point(p.x, p.y, 1n);
+    }
+    /** Convert Uint8Array or hex string to Point. */
+    static fromHex(hex) {
+        hex = toU8(hex); // convert hex string to Uint8Array
+        let p = undefined;
+        const head = hex[0], tail = hex.subarray(1); // first byte is prefix, rest is data
+        const x = slc(tail, 0, fLen), len = hex.length; // next 32 bytes are x coordinate
+        if (len === 33 && [0x02, 0x03].includes(head)) { // compressed points: 33b, start
+            if (!fe(x))
+                err('Point hex invalid: x not FE'); // with byte 0x02 or 0x03. Check if 0<x<P
+            let y = sqrt(curve(x)); // x³ + ax + b is right side of equation
+            const isYOdd = (y & 1n) === 1n; // y² is equivalent left-side. Calculate y²:
+            const headOdd = (head & 1) === 1; // y = √y²; there are two solutions: y, -y
+            if (headOdd !== isYOdd)
+                y = M(-y); // determine proper solution
+            p = new Point(x, y, 1n); // create point
+        } // Uncompressed points: 65b, start with 0x04
+        if (len === 65 && head === 0x04)
+            p = new Point(x, slc(tail, fLen, 2 * fLen), 1n);
+        return p ? p.ok() : err('Point invalid: not on curve'); // Verify the result
+    }
+    /** Create point from a private key. */
+    static fromPrivateKey(k) { return G.mul(toPriv(k)); }
+    get x() { return this.aff().x; } // .x, .y will call expensive toAffine:
+    get y() { return this.aff().y; } // should be used with care.
+    /** Equality check: compare points P&Q. */
+    equals(other) {
+        const { px: X1, py: Y1, pz: Z1 } = this;
+        const { px: X2, py: Y2, pz: Z2 } = aPoint(other); // isPoint() checks class equality
+        const X1Z2 = M(X1 * Z2), X2Z1 = M(X2 * Z1);
+        const Y1Z2 = M(Y1 * Z2), Y2Z1 = M(Y2 * Z1);
+        return X1Z2 === X2Z1 && Y1Z2 === Y2Z1;
+    }
+    /** Flip point over y coordinate. */
+    negate() { return new Point(this.px, M(-this.py), this.pz); }
+    /** Point doubling: P+P, complete formula. */
+    double() { return this.add(this); }
+    /**
+     * Point addition: P+Q, complete, exception-free formula
+     * (Renes-Costello-Batina, algo 1 of [2015/1060](https://eprint.iacr.org/2015/1060)).
+     * Cost: 12M + 0S + 3*a + 3*b3 + 23add.
+     */
+    add(other) {
+        const { px: X1, py: Y1, pz: Z1 } = this;
+        const { px: X2, py: Y2, pz: Z2 } = aPoint(other);
+        const { a, b } = CURVE;
+        let X3 = 0n, Y3 = 0n, Z3 = 0n;
+        const b3 = M(b * 3n);
+        let t0 = M(X1 * X2), t1 = M(Y1 * Y2), t2 = M(Z1 * Z2), t3 = M(X1 + Y1); // step 1
+        let t4 = M(X2 + Y2); // step 5
+        t3 = M(t3 * t4);
+        t4 = M(t0 + t1);
+        t3 = M(t3 - t4);
+        t4 = M(X1 + Z1);
+        let t5 = M(X2 + Z2); // step 10
+        t4 = M(t4 * t5);
+        t5 = M(t0 + t2);
+        t4 = M(t4 - t5);
+        t5 = M(Y1 + Z1);
+        X3 = M(Y2 + Z2); // step 15
+        t5 = M(t5 * X3);
+        X3 = M(t1 + t2);
+        t5 = M(t5 - X3);
+        Z3 = M(a * t4);
+        X3 = M(b3 * t2); // step 20
+        Z3 = M(X3 + Z3);
+        X3 = M(t1 - Z3);
+        Z3 = M(t1 + Z3);
+        Y3 = M(X3 * Z3);
+        t1 = M(t0 + t0); // step 25
+        t1 = M(t1 + t0);
+        t2 = M(a * t2);
+        t4 = M(b3 * t4);
+        t1 = M(t1 + t2);
+        t2 = M(t0 - t2); // step 30
+        t2 = M(a * t2);
+        t4 = M(t4 + t2);
+        t0 = M(t1 * t4);
+        Y3 = M(Y3 + t0);
+        t0 = M(t5 * t4); // step 35
+        X3 = M(t3 * X3);
+        X3 = M(X3 - t0);
+        t0 = M(t3 * t1);
+        Z3 = M(t5 * Z3);
+        Z3 = M(Z3 + t0); // step 40
+        return new Point(X3, Y3, Z3);
+    }
+    mul(n, safe = true) {
+        if (!safe && n === 0n)
+            return I; // in unsafe mode, allow zero
+        if (!ge(n))
+            err('scalar invalid'); // must be 0 < n < CURVE.n
+        if (this.equals(G))
+            return wNAF(n).p; // use precomputes for base point
+        let p = I, f = G; // init result point & fake point
+        for (let d = this; n > 0n; d = d.double(), n >>= 1n) { // double-and-add ladder
+            if (n & 1n)
+                p = p.add(d); // if bit is present, add to point
+            else if (safe)
+                f = f.add(d); // if not, add to fake for timing safety
+        }
+        return p;
+    }
+    mulAddQUns(R, u1, u2) {
+        return this.mul(u1, false).add(R.mul(u2, false)).ok(); // Unsafe: do NOT use for stuff related
+    } // to private keys. Doesn't use Shamir trick
+    /** Convert point to 2d xy affine point. (x, y, z) ∋ (x=x/z, y=y/z) */
+    toAffine() {
+        const { px: x, py: y, pz: z } = this;
+        if (this.equals(I))
+            return { x: 0n, y: 0n }; // fast-path for zero point
+        if (z === 1n)
+            return { x, y }; // if z is 1, pass affine coordinates as-is
+        const iz = inv(z, P); // z^-1: invert z
+        if (M(z * iz) !== 1n)
+            err('inverse invalid'); // (z * z^-1) must be 1, otherwise bad math
+        return { x: M(x * iz), y: M(y * iz) }; // x = x*z^-1; y = y*z^-1
+    }
+    /** Checks if the point is valid and on-curve. */
+    assertValidity() {
+        const { x, y } = this.aff(); // convert to 2d xy affine point.
+        if (!fe(x) || !fe(y))
+            err('Point invalid: x or y'); // x and y must be in range 0 < n < P
+        return M(y * y) === curve(x) ? // y² = x³ + ax + b, must be equal
+            this : err('Point invalid: not on curve');
+    }
+    multiply(n) { return this.mul(n); } // Aliases to compress code
+    aff() { return this.toAffine(); }
+    ok() { return this.assertValidity(); }
+    toHex(isCompressed = true) {
+        const { x, y } = this.aff(); // convert to 2d xy affine point
+        const head = isCompressed ? ((y & 1n) === 0n ? '02' : '03') : '04'; // 0x02, 0x03, 0x04 prefix
+        return head + n2h(x) + (isCompressed ? '' : n2h(y)); // prefix||x and ||y
+    }
+    toRawBytes(isCompressed = true) {
+        return h2b(this.toHex(isCompressed)); // re-use toHex(), convert hex to bytes
+    }
+}
+/** Generator / base point */
+Point.BASE = new Point(Gx, Gy, 1n);
+/** Identity / zero point */
+Point.ZERO = new Point(0n, 1n, 0n);
+const { BASE: G, ZERO: I } = Point; // Generator, identity points
+const padh = (n, pad) => n.toString(16).padStart(pad, '0');
+const b2h = (b) => Array.from(au8(b)).map(e => padh(e, 2)).join(''); // bytes to hex
+const C = { _0: 48, _9: 57, A: 65, F: 70, a: 97, f: 102 }; // ASCII characters
+const _ch = (ch) => {
+    if (ch >= C._0 && ch <= C._9)
+        return ch - C._0; // '2' => 50-48
+    if (ch >= C.A && ch <= C.F)
+        return ch - (C.A - 10); // 'B' => 66-(65-10)
+    if (ch >= C.a && ch <= C.f)
+        return ch - (C.a - 10); // 'b' => 98-(97-10)
+    return;
+};
+const h2b = (hex) => {
+    const e = 'hex invalid';
+    if (!isS(hex))
+        return err(e);
+    const hl = hex.length, al = hl / 2;
+    if (hl % 2)
+        return err(e);
+    const array = u8n(al);
+    for (let ai = 0, hi = 0; ai < al; ai++, hi += 2) { // treat each char as ASCII
+        const n1 = _ch(hex.charCodeAt(hi)); // parse first char, multiply it by 16
+        const n2 = _ch(hex.charCodeAt(hi + 1)); // parse second char
+        if (n1 === undefined || n2 === undefined)
+            return err(e);
+        array[ai] = n1 * 16 + n2; // example: 'A9' => 10*16 + 9
+    }
+    return array;
+};
+const b2n = (b) => BigInt('0x' + (b2h(b) || '0')); // bytes to number
+const slc = (b, from, to) => b2n(b.slice(from, to)); // slice bytes num
+const n2b = (num) => {
+    return isB(num) && num >= 0n && num < B256 ? h2b(padh(num, 2 * fLen)) : err('bigint expected');
+};
+const n2h = (num) => b2h(n2b(num)); // number to 32b hex
+const concatB = (...arrs) => {
+    const r = u8n(arrs.reduce((sum, a) => sum + au8(a).length, 0)); // create u8a of summed length
+    let pad = 0; // walk through each array,
+    arrs.forEach(a => { r.set(a, pad); pad += a.length; }); // ensure they have proper type
+    return r;
+};
+const inv = (num, md) => {
+    if (num === 0n || md <= 0n)
+        err('no inverse n=' + num + ' mod=' + md); // no neg exponent for now
+    let a = M(num, md), b = md, x = 0n, y = 1n, u = 1n, v = 0n;
+    while (a !== 0n) { // uses euclidean gcd algorithm
+        const q = b / a, r = b % a; // not constant-time
+        const m = x - u * q, n = y - v * q;
+        b = a, a = r, x = u, y = v, u = m, v = n;
+    }
+    return b === 1n ? M(x, md) : err('no inverse'); // b is gcd at this point
+};
+const sqrt = (n) => {
+    let r = 1n; // So, a special, fast case. Paper: "Square Roots from 1;24,51,10 to Dan Shanks".
+    for (let num = n, e = (P + 1n) / 4n; e > 0n; e >>= 1n) { // powMod: modular exponentiation.
+        if (e & 1n)
+            r = (r * num) % P; // Uses exponentiation by squaring.
+        num = (num * num) % P; // Not constant-time.
+    }
+    return M(r * r) === n ? r : err('sqrt invalid'); // check if result is valid
+};
+const toPriv = (p) => {
+    if (!isB(p))
+        p = b2n(toU8(p, fLen)); // convert to bigint when bytes
+    return ge(p) ? p : err('private key invalid 3'); // check if bigint is in range
+};
+const high = (n) => n > (N >> 1n); // if a number is bigger than CURVE.n/2
+/** Creates 33/65-byte public key from 32-byte private key. */
+const getPublicKey = (privKey, isCompressed = true) => {
+    return Point.fromPrivateKey(privKey).toRawBytes(isCompressed);
+};
+/** ECDSA Signature class. Supports only compact 64-byte representation, not DER. */
+class Signature {
+    constructor(r, s, recovery) {
+        this.r = r;
+        this.s = s;
+        this.recovery = recovery;
+        this.assertValidity(); // recovery bit is optional when
+    } // constructed outside.
+    /** Create signature from 64b compact (r || s) representation. */
+    static fromCompact(hex) {
+        hex = toU8(hex, 64); // compact repr is (32b r)||(32b s)
+        return new Signature(slc(hex, 0, fLen), slc(hex, fLen, 2 * fLen));
+    }
+    assertValidity() { return ge(this.r) && ge(this.s) ? this : err(); } // 0 < r or s < CURVE.n
+    /** Create new signature, with added recovery bit. */
+    addRecoveryBit(rec) {
+        return new Signature(this.r, this.s, rec);
+    }
+    hasHighS() { return high(this.s); }
+    normalizeS() {
+        return high(this.s) ? new Signature(this.r, M(-this.s, N), this.recovery) : this;
+    }
+    /** ECDSA public key recovery. Requires msg hash and recovery id. */
+    recoverPublicKey(msgh) {
+        const { r, s, recovery: rec } = this; // secg.org/sec1-v2.pdf 4.1.6
+        if (![0, 1, 2, 3].includes(rec))
+            err('recovery id invalid'); // check recovery id
+        const h = bits2int_modN(toU8(msgh, fLen)); // Truncate hash
+        const radj = rec === 2 || rec === 3 ? r + N : r; // If rec was 2 or 3, q.x is bigger than n
+        if (radj >= P)
+            err('q.x invalid'); // ensure q.x is still a field element
+        const head = (rec & 1) === 0 ? '02' : '03'; // head is 0x02 or 0x03
+        const R = Point.fromHex(head + n2h(radj)); // concat head + hex repr of r
+        const ir = inv(radj, N); // r^-1
+        const u1 = M(-h * ir, N); // -hr^-1
+        const u2 = M(s * ir, N); // sr^-1
+        return G.mulAddQUns(R, u1, u2); // (sr^-1)R-(hr^-1)G = -(hr^-1)G + (sr^-1)
+    }
+    /** Uint8Array 64b compact (r || s) representation. */
+    toCompactRawBytes() { return h2b(this.toCompactHex()); }
+    /** Hex string 64b compact (r || s) representation. */
+    toCompactHex() { return n2h(this.r) + n2h(this.s); }
+}
+const bits2int = (bytes) => {
+    const delta = bytes.length * 8 - 256; // RFC suggests optional truncating via bits2octets
+    if (delta > 1024)
+        err('msg invalid'); // our CUSTOM check, "just-in-case"
+    const num = b2n(bytes); // FIPS 186-4 4.6 suggests the leftmost min(nBitLen, outLen) bits, which
+    return delta > 0 ? num >> BigInt(delta) : num; // matches bits2int. bits2int can produce res>N.
+};
+const bits2int_modN = (bytes) => {
+    return M(bits2int(bytes), N); // with 0: BAD for trunc as per RFC vectors
+};
+const i2o = (num) => n2b(num); // int to octets
+const cr = () => // We support: 1) browsers 2) node.js 19+ 3) deno, other envs with crypto
+ typeof globalThis === 'object' && 'crypto' in globalThis ? globalThis.crypto : undefined;
+let _hmacSync; // Can be redefined by use in utils; built-ins don't provide it
+const optS = { lowS: true }; // opts for sign()
+const optV = { lowS: true }; // standard opts for verify()
+const prepSig = (msgh, priv, opts = optS) => {
+    if (['der', 'recovered', 'canonical'].some(k => k in opts))
+        err('option not supported'); // legacy opts
+    let { lowS } = opts; // generates low-s sigs by default
+    if (lowS == null)
+        lowS = true; // RFC6979 3.2: we skip step A
+    const h1i = bits2int_modN(toU8(msgh)); // msg bigint
+    const h1o = i2o(h1i); // msg octets
+    const d = toPriv(priv); // validate private key, convert to bigint
+    const seed = [i2o(d), h1o]; // Step D of RFC6979 3.2
+    let ent = opts.extraEntropy; // RFC6979 3.6: additional k' (optional)
+    if (ent) // K = HMAC_K(V || 0x00 || int2octets(x) || bits2octets(h1) || k')
+        seed.push(ent === true ? etc.randomBytes(fLen) : toU8(ent)); // true == fetch from CSPRNG
+    const m = h1i; // convert msg to bigint
+    const k2sig = (kBytes) => {
+        const k = bits2int(kBytes); // RFC6979 method.
+        if (!ge(k))
+            return; // Check 0 < k < CURVE.n
+        const ik = inv(k, N); // k^-1 mod n, NOT mod P
+        const q = G.mul(k).aff(); // q = Gk
+        const r = M(q.x, N); // r = q.x mod n
+        if (r === 0n)
+            return; // r=0 invalid
+        const s = M(ik * M(m + M(d * r, N), N), N); // s = k^-1(m + rd) mod n
+        if (s === 0n)
+            return; // s=0 invalid
+        let normS = s; // normalized S
+        let rec = (q.x === r ? 0 : 2) | Number(q.y & 1n); // recovery bit
+        if (lowS && high(s)) { // if lowS was passed, ensure s is always
+            normS = M(-s, N); // in the bottom half of CURVE.n
+            rec ^= 1;
+        }
+        return new Signature(r, normS, rec); // use normS, not s
+    };
+    return { seed: concatB(...seed), k2sig };
+};
+function hmacDrbg(asynchronous) {
+    let v = u8n(fLen); // Minimal non-full-spec HMAC-DRBG from NIST 800-90 for RFC6979 sigs.
+    let k = u8n(fLen); // Steps B, C of RFC6979 3.2: set hashLen, in our case always same
+    let i = 0; // Iterations counter, will throw when over 1000
+    const reset = () => { v.fill(1); k.fill(0); i = 0; };
+    const _e = 'drbg: tried 1000 values';
+    if (asynchronous) { // asynchronous=true
+        const h = (...b) => etc.hmacSha256Async(k, v, ...b); // hmac(k)(v, ...values)
+        const reseed = async (seed = u8n()) => {
+            k = await h(u8n([0x00]), seed); // k = hmac(K || V || 0x00 || seed)
+            v = await h(); // v = hmac(K || V)
+            if (seed.length === 0)
+                return;
+            k = await h(u8n([0x01]), seed); // k = hmac(K || V || 0x01 || seed)
+            v = await h(); // v = hmac(K || V)
+        };
+        const gen = async () => {
+            if (i++ >= 1000)
+                err(_e);
+            v = await h(); // v = hmac(K || V)
+            return v;
+        };
+        return async (seed, pred) => {
+            reset(); // the returned fn, don't, it's: 1. slower (JIT). 2. unsafe (async race conditions)
+            await reseed(seed); // Steps D-G
+            let res = undefined; // Step H: grind until k is in [1..n-1]
+            while (!(res = pred(await gen())))
+                await reseed(); // test predicate until it returns ok
+            reset();
+            return res;
+        };
+    }
+    else {
+        const h = (...b) => {
+            const f = _hmacSync;
+            if (!f)
+                err('etc.hmacSha256Sync not set');
+            return f(k, v, ...b); // hmac(k)(v, ...values)
+        };
+        const reseed = (seed = u8n()) => {
+            k = h(u8n([0x00]), seed); // k = hmac(k || v || 0x00 || seed)
+            v = h(); // v = hmac(k || v)
+            if (seed.length === 0)
+                return;
+            k = h(u8n([0x01]), seed); // k = hmac(k || v || 0x01 || seed)
+            v = h(); // v = hmac(k || v)
+        };
+        const gen = () => {
+            if (i++ >= 1000)
+                err(_e);
+            v = h(); // v = hmac(k || v)
+            return v;
+        };
+        return (seed, pred) => {
+            reset();
+            reseed(seed); // Steps D-G
+            let res = undefined; // Step H: grind until k is in [1..n-1]
+            while (!(res = pred(gen())))
+                reseed(); // test predicate until it returns ok
+            reset();
+            return res;
+        };
+    }
+}
+;
+/** ECDSA signature generation. via secg.org/sec1-v2.pdf 4.1.2 + RFC6979 deterministic k. */
+/**
+ * Sign a msg hash using secp256k1. Async.
+ * It is advised to use `extraEntropy: true` (from RFC6979 3.6) to prevent fault attacks.
+ * Worst case: if randomness source for extraEntropy is bad, it would be as secure as if
+ * the option has not been used.
+ * @param msgh - message HASH, not message itself e.g. sha256(message)
+ * @param priv - private key
+ * @param opts - `lowS: true` to prevent malleability (s >= CURVE.n/2), `extraEntropy: boolean | Hex` to improve sig security.
+ */
+const signAsync = async (msgh, priv, opts = optS) => {
+    const { seed, k2sig } = prepSig(msgh, priv, opts); // Extract arguments for hmac-drbg
+    return hmacDrbg(true)(seed, k2sig); // Re-run drbg until k2sig returns ok
+};
+/**
+ * Sign a msg hash using secp256k1.
+ * It is advised to use `extraEntropy: true` (from RFC6979 3.6) to prevent fault attacks.
+ * Worst case: if randomness source for extraEntropy is bad, it would be as secure as if
+ * the option has not been used.
+ * @param msgh - message HASH, not message itself e.g. sha256(message)
+ * @param priv - private key
+ * @param opts - `lowS: true` to prevent malleability (s >= CURVE.n/2), `extraEntropy: boolean | Hex` to improve sig security.
+ * @example
+ * const sig = sign(sha256('hello'), privKey, { extraEntropy: true }).toCompactRawBytes();
+ */
+const sign = (msgh, priv, opts = optS) => {
+    const { seed, k2sig } = prepSig(msgh, priv, opts); // Extract arguments for hmac-drbg
+    return hmacDrbg(false)(seed, k2sig); // Re-run drbg until k2sig returns ok
+};
+/**
+ * Verify a signature using secp256k1.
+ * @param sig - signature, 64-byte or Signature instance
+ * @param msgh - message HASH, not message itself e.g. sha256(message)
+ * @param pub - public key
+ * @param opts - { lowS: true } is default, prohibits s >= CURVE.n/2 to prevent malleability
+ */
+const verify = (sig, msgh, pub, opts = optV) => {
+    let { lowS } = opts; // ECDSA signature verification
+    if (lowS == null)
+        lowS = true; // Default lowS=true
+    if ('strict' in opts)
+        err('option not supported'); // legacy param
+    let sig_, h, P; // secg.org/sec1-v2.pdf 4.1.4
+    const rs = sig && typeof sig === 'object' && 'r' in sig; // Previous ver supported DER sigs. We
+    if (!rs && (toU8(sig).length !== 2 * fLen)) // throw error when DER is suspected now.
+        err('signature must be 64 bytes');
+    try {
+        sig_ = rs ? new Signature(sig.r, sig.s).assertValidity() : Signature.fromCompact(sig);
+        h = bits2int_modN(toU8(msgh)); // Truncate hash
+        P = pub instanceof Point ? pub.ok() : Point.fromHex(pub); // Validate public key
+    }
+    catch (e) {
+        return false;
+    } // Check sig for validity in both cases
+    if (!sig_)
+        return false;
+    const { r, s } = sig_;
+    if (lowS && high(s))
+        return false; // lowS bans sig.s >= CURVE.n/2
+    let R;
+    try {
+        const is = inv(s, N); // s^-1
+        const u1 = M(h * is, N); // u1 = hs^-1 mod n
+        const u2 = M(r * is, N); // u2 = rs^-1 mod n
+        R = G.mulAddQUns(P, u1, u2).aff(); // R = u1⋅G + u2⋅P
+    }
+    catch (error) {
+        return false;
+    }
+    if (!R)
+        return false; // stop if R is identity / zero point
+    const v = M(R.x, N); // R.x must be in N's field, not P's
+    return v === r; // mod(R.x, n) == r
+};
+/**
+ * Elliptic Curve Diffie-Hellman (ECDH) on secp256k1.
+ * Result is **NOT hashed**. Use hash on it if you need.
+ * @param privA private key A
+ * @param pubB public key B
+ * @param isCompressed 33-byte or 65-byte output
+ * @returns public key C
+ */
+const getSharedSecret = (privA, pubB, isCompressed = true) => {
+    return Point.fromHex(pubB).mul(toPriv(privA)).toRawBytes(isCompressed); // ECDH
+};
+const hashToPrivateKey = (hash) => {
+    hash = toU8(hash); // produces private keys with modulo bias
+    if (hash.length < fLen + 8 || hash.length > 1024)
+        err('expected 40-1024b'); // being neglible.
+    const num = M(b2n(hash), N - 1n); // takes n+8 bytes
+    return n2b(num + 1n); // returns (hash mod n-1)+1
+};
+/** Math, hex, byte helpers. Not in `utils` because utils share API with noble-curves. */
+const etc = {
+    hexToBytes: h2b,
+    bytesToHex: b2h,
+    concatBytes: concatB,
+    bytesToNumberBE: b2n,
+    numberToBytesBE: n2b,
+    mod: M,
+    invert: inv, // math utilities
+    hmacSha256Async: async (key, ...msgs) => {
+        const c = cr(); // async HMAC-SHA256, no sync built-in!
+        const s = c && c.subtle; // For React Native support, see README.
+        if (!s)
+            return err('etc.hmacSha256Async or crypto.subtle must be defined'); // Uses webcrypto built-in cryptography.
+        const k = await s.importKey('raw', key, { name: 'HMAC', hash: { name: 'SHA-256' } }, false, ['sign']);
+        return u8n(await s.sign('HMAC', k, concatB(...msgs)));
+    },
+    hmacSha256Sync: _hmacSync, // For TypeScript. Actual logic is below
+    hashToPrivateKey: hashToPrivateKey,
+    randomBytes: (len = 32) => {
+        const crypto = cr(); // Must be shimmed in node.js <= 18 to prevent error. See README.
+        if (!crypto || !crypto.getRandomValues)
+            err('crypto.getRandomValues must be defined');
+        return crypto.getRandomValues(u8n(len));
+    },
+};
+/** Curve-specific utilities for private keys. */
+const utils = {
+    normPrivateKeyToScalar: toPriv,
+    isValidPrivateKey: (key) => { try {
+        return !!toPriv(key);
+    }
+    catch (e) {
+        return false;
+    } },
+    randomPrivateKey: () => hashToPrivateKey(etc.randomBytes(fLen + 16)), // FIPS 186 B.4.1.
+    precompute: (w = 8, p = G) => { p.multiply(3n); w; return p; }, // no-op
+};
+Object.defineProperties(etc, { hmacSha256Sync: {
+        configurable: false, get() { return _hmacSync; }, set(f) { if (!_hmacSync)
+            _hmacSync = f; },
+    } });
+const W = 8; // Precomputes-related code. W = window size
+const precompute = () => {
+    const points = []; // 10x sign(), 2x verify(). To achieve this,
+    const windows = 256 / W + 1; // app needs to spend 40ms+ to calculate
+    let p = G, b = p; // a lot of points related to base point G.
+    for (let w = 0; w < windows; w++) { // Points are stored in array and used
+        b = p; // any time Gx multiplication is done.
+        points.push(b); // They consume 16-32 MiB of RAM.
+        for (let i = 1; i < 2 ** (W - 1); i++) {
+            b = b.add(p);
+            points.push(b);
+        }
+        p = b.double(); // Precomputes don't speed-up getSharedKey,
+    } // which multiplies user point by scalar,
+    return points; // when precomputes are using base point
+};
+let Gpows = undefined; // precomputes for base point G
+const wNAF = (n) => {
+    // Compared to other point mult methods,
+    const comp = Gpows || (Gpows = precompute()); // stores 2x less points using subtraction
+    const neg = (cnd, p) => { let n = p.negate(); return cnd ? n : p; }; // negate
+    let p = I, f = G; // f must be G, or could become I in the end
+    const windows = 1 + 256 / W; // W=8 17 windows
+    const wsize = 2 ** (W - 1); // W=8 128 window size
+    const mask = BigInt(2 ** W - 1); // W=8 will create mask 0b11111111
+    const maxNum = 2 ** W; // W=8 256
+    const shiftBy = BigInt(W); // W=8 8
+    for (let w = 0; w < windows; w++) {
+        const off = w * wsize;
+        let wbits = Number(n & mask); // extract W bits.
+        n >>= shiftBy; // shift number by W bits.
+        if (wbits > wsize) {
+            wbits -= maxNum;
+            n += 1n;
+        } // split if bits > max: +224 => 256-32
+        const off1 = off, off2 = off + Math.abs(wbits) - 1; // offsets, evaluate both
+        const cnd1 = w % 2 !== 0, cnd2 = wbits < 0; // conditions, evaluate both
+        if (wbits === 0) {
+            f = f.add(neg(cnd1, comp[off1])); // bits are 0: add garbage to fake point
+        }
+        else { //          ^ can't add off2, off2 = I
+            p = p.add(neg(cnd2, comp[off2])); // bits are 1: add to result point
+        }
+    }
+    return { p, f }; // return both real and fake points for JIT
+}; // !! you can disable precomputes by commenting-out call of the wNAF() inside Point#mul()
+window.nobleSecp = { getPublicKey, CURVE, utils, ProjectivePoint: Point };
+
+
+</script>
+<script>
+
+(function(global){
+  const zl=[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,7,4,13,1,10,6,15,3,12,0,9,5,2,14,11,8,3,10,14,4,9,15,8,1,2,7,0,6,13,11,5,12,1,9,11,10,0,8,12,4,13,3,7,15,14,5,6,2,4,0,5,9,7,12,2,10,14,1,3,8,11,6,15,13];
+  const zr=[5,14,7,0,9,2,11,4,13,6,15,8,1,10,3,12,6,11,3,7,0,13,5,10,14,15,8,12,4,9,1,2,15,5,1,3,7,14,6,9,11,8,12,2,10,0,4,13,8,6,4,1,3,11,15,0,5,12,2,13,9,7,10,14,12,15,10,4,1,5,8,7,6,2,13,14,0,3,9,11];
+  const sl=[11,14,15,12,5,8,7,9,11,13,14,15,6,7,9,8,7,6,8,13,11,9,7,15,7,12,15,9,11,7,13,12,11,13,6,7,14,9,13,15,14,8,13,6,5,12,7,5,11,12,14,15,14,15,9,8,9,14,5,6,8,6,5,12,9,15,5,11,6,8,13,12,5,12,13,14,11,8,5,6];
+  const sr=[8,9,9,11,13,15,15,5,7,7,8,11,14,14,12,6,9,13,15,7,12,8,9,11,7,7,12,7,6,15,13,11,9,7,15,11,8,6,6,14,12,13,5,14,13,13,7,5,15,5,8,11,14,14,6,14,6,9,12,9,12,5,15,8,8,5,12,9,12,5,14,6,8,13,6,5,15,13,11,11];
+  function rotl(x,n){return ((x<<n)|(x>>>(32-n)))>>>0;}
+  function f1(x,y,z){return (x^y^z)>>>0;}
+  function f2(x,y,z){return ((x&y)|((~x)&z))>>>0;}
+  function f3(x,y,z){return ((x|(~y))^z)>>>0;}
+  function f4(x,y,z){return ((x&z)|(y&(~z)))>>>0;}
+  function f5(x,y,z){return (x^(y|(~z)))>>>0;}
+
+  function ripemd160(bytes){
+    const len=bytes.length, ml=len*8;
+    const padLen = ((len + 9 + 63) & ~63);
+    const msg = new Uint8Array(padLen);
+    msg.set(bytes);
+    msg[len]=0x80;
+    const dv = new DataView(msg.buffer);
+    dv.setUint32(padLen-8, (ml>>>0), true);
+    dv.setUint32(padLen-4, Math.floor(ml/0x100000000)>>>0, true);
+    let h0=0x67452301,h1=0xefcdab89,h2=0x98badcfe,h3=0x10325476,h4=0xc3d2e1f0;
+    for(let off=0; off<padLen; off+=64){
+      const X = new Uint32Array(16);
+      for(let i=0;i<16;i++) X[i]=dv.getUint32(off+i*4, true);
+      let A=h0,B=h1,C=h2,D=h3,E=h4;
+      let A2=h0,B2=h1,C2=h2,D2=h3,E2=h4;
+      for(let j=0;j<80;j++){
+        let T;
+        if(j<16)      T = (A + f1(B,C,D) + X[zl[j]]) >>> 0;
+        else if(j<32) T = (A + f2(B,C,D) + X[zl[j]] + 0x5a827999) >>> 0;
+        else if(j<48) T = (A + f3(B,C,D) + X[zl[j]] + 0x6ed9eba1) >>> 0;
+        else if(j<64) T = (A + f4(B,C,D) + X[zl[j]] + 0x8f1bbcdc) >>> 0;
+        else          T = (A + f5(B,C,D) + X[zl[j]] + 0xa953fd4e) >>> 0;
+        T = (rotl(T, sl[j]) + E) >>> 0;
+        A=E; E=D; D=rotl(C,10); C=B; B=T;
+
+        if(j<16)      T = (A2 + f5(B2,C2,D2) + X[zr[j]] + 0x50a28be6) >>> 0;
+        else if(j<32) T = (A2 + f4(B2,C2,D2) + X[zr[j]] + 0x5c4dd124) >>> 0;
+        else if(j<48) T = (A2 + f3(B2,C2,D2) + X[zr[j]] + 0x6d703ef3) >>> 0;
+        else if(j<64) T = (A2 + f2(B2,C2,D2) + X[zr[j]] + 0x7a6d76e9) >>> 0;
+        else          T = (A2 + f1(B2,C2,D2) + X[zr[j]] + 0x00000000) >>> 0;
+        T = (rotl(T, sr[j]) + E2) >>> 0;
+        A2=E2; E2=D2; D2=rotl(C2,10); C2=B2; B2=T;
+      }
+      const T2 = (h1 + C + D2) >>> 0;
+      h1 = (h2 + D + E2) >>> 0;
+      h2 = (h3 + E + A2) >>> 0;
+      h3 = (h4 + A + B2) >>> 0;
+      h4 = (h0 + B + C2) >>> 0;
+      h0 = T2;
+    }
+    const out = new Uint8Array(20);
+    const dv2 = new DataView(out.buffer);
+    dv2.setUint32(0,h0,true); dv2.setUint32(4,h1,true); dv2.setUint32(8,h2,true);
+    dv2.setUint32(12,h3,true); dv2.setUint32(16,h4,true);
+    return out;
+  }
+  global.ripemd160 = ripemd160;
+})(typeof window!=='undefined'?window:globalThis);
+
+
+
+</script>
+<script>
+
+/* ============================================================
+   qrcode-generator v2.0.4 by Kazuhiko Arase, MIT licensed.
+   https://github.com/kazuhikoarase/qrcode-generator
+   Inlined verbatim for offline use. Used only to render the
+   SeedQR in section 1. Exposes the global qrcode().
+   ============================================================ */
+//---------------------------------------------------------------------
+//
+// QR Code Generator for JavaScript
+//
+// Copyright (c) 2009 Kazuhiko Arase
+//
+// URL: http://www.d-project.com/
+//
+// Licensed under the MIT license:
+//  http://www.opensource.org/licenses/mit-license.php
+//
+// The word 'QR Code' is registered trademark of
+// DENSO WAVE INCORPORATED
+//  http://www.denso-wave.com/qrcode/faqpatent-e.html
+//
+//---------------------------------------------------------------------
+
+var qrcode = function() {
+
+  //---------------------------------------------------------------------
+  // qrcode
+  //---------------------------------------------------------------------
+
+  /**
+   * qrcode
+   * @param typeNumber 1 to 40
+   * @param errorCorrectionLevel 'L','M','Q','H'
+   */
+  var qrcode = function(typeNumber, errorCorrectionLevel) {
+
+    var PAD0 = 0xEC;
+    var PAD1 = 0x11;
+
+    var _typeNumber = typeNumber;
+    var _errorCorrectionLevel = QRErrorCorrectionLevel[errorCorrectionLevel];
+    var _modules = null;
+    var _moduleCount = 0;
+    var _dataCache = null;
+    var _dataList = [];
+
+    var _this = {};
+
+    var makeImpl = function(test, maskPattern) {
+
+      _moduleCount = _typeNumber * 4 + 17;
+      _modules = function(moduleCount) {
+        var modules = new Array(moduleCount);
+        for (var row = 0; row < moduleCount; row += 1) {
+          modules[row] = new Array(moduleCount);
+          for (var col = 0; col < moduleCount; col += 1) {
+            modules[row][col] = null;
+          }
+        }
+        return modules;
+      }(_moduleCount);
+
+      setupPositionProbePattern(0, 0);
+      setupPositionProbePattern(_moduleCount - 7, 0);
+      setupPositionProbePattern(0, _moduleCount - 7);
+      setupPositionAdjustPattern();
+      setupTimingPattern();
+      setupTypeInfo(test, maskPattern);
+
+      if (_typeNumber >= 7) {
+        setupTypeNumber(test);
+      }
+
+      if (_dataCache == null) {
+        _dataCache = createData(_typeNumber, _errorCorrectionLevel, _dataList);
+      }
+
+      mapData(_dataCache, maskPattern);
+    };
+
+    var setupPositionProbePattern = function(row, col) {
+
+      for (var r = -1; r <= 7; r += 1) {
+
+        if (row + r <= -1 || _moduleCount <= row + r) continue;
+
+        for (var c = -1; c <= 7; c += 1) {
+
+          if (col + c <= -1 || _moduleCount <= col + c) continue;
+
+          if ( (0 <= r && r <= 6 && (c == 0 || c == 6) )
+              || (0 <= c && c <= 6 && (r == 0 || r == 6) )
+              || (2 <= r && r <= 4 && 2 <= c && c <= 4) ) {
+            _modules[row + r][col + c] = true;
+          } else {
+            _modules[row + r][col + c] = false;
+          }
+        }
+      }
+    };
+
+    var getBestMaskPattern = function() {
+
+      var minLostPoint = 0;
+      var pattern = 0;
+
+      for (var i = 0; i < 8; i += 1) {
+
+        makeImpl(true, i);
+
+        var lostPoint = QRUtil.getLostPoint(_this);
+
+        if (i == 0 || minLostPoint > lostPoint) {
+          minLostPoint = lostPoint;
+          pattern = i;
+        }
+      }
+
+      return pattern;
+    };
+
+    var setupTimingPattern = function() {
+
+      for (var r = 8; r < _moduleCount - 8; r += 1) {
+        if (_modules[r][6] != null) {
+          continue;
+        }
+        _modules[r][6] = (r % 2 == 0);
+      }
+
+      for (var c = 8; c < _moduleCount - 8; c += 1) {
+        if (_modules[6][c] != null) {
+          continue;
+        }
+        _modules[6][c] = (c % 2 == 0);
+      }
+    };
+
+    var setupPositionAdjustPattern = function() {
+
+      var pos = QRUtil.getPatternPosition(_typeNumber);
+
+      for (var i = 0; i < pos.length; i += 1) {
+
+        for (var j = 0; j < pos.length; j += 1) {
+
+          var row = pos[i];
+          var col = pos[j];
+
+          if (_modules[row][col] != null) {
+            continue;
+          }
+
+          for (var r = -2; r <= 2; r += 1) {
+
+            for (var c = -2; c <= 2; c += 1) {
+
+              if (r == -2 || r == 2 || c == -2 || c == 2
+                  || (r == 0 && c == 0) ) {
+                _modules[row + r][col + c] = true;
+              } else {
+                _modules[row + r][col + c] = false;
+              }
+            }
+          }
+        }
+      }
+    };
+
+    var setupTypeNumber = function(test) {
+
+      var bits = QRUtil.getBCHTypeNumber(_typeNumber);
+
+      for (var i = 0; i < 18; i += 1) {
+        var mod = (!test && ( (bits >> i) & 1) == 1);
+        _modules[Math.floor(i / 3)][i % 3 + _moduleCount - 8 - 3] = mod;
+      }
+
+      for (var i = 0; i < 18; i += 1) {
+        var mod = (!test && ( (bits >> i) & 1) == 1);
+        _modules[i % 3 + _moduleCount - 8 - 3][Math.floor(i / 3)] = mod;
+      }
+    };
+
+    var setupTypeInfo = function(test, maskPattern) {
+
+      var data = (_errorCorrectionLevel << 3) | maskPattern;
+      var bits = QRUtil.getBCHTypeInfo(data);
+
+      // vertical
+      for (var i = 0; i < 15; i += 1) {
+
+        var mod = (!test && ( (bits >> i) & 1) == 1);
+
+        if (i < 6) {
+          _modules[i][8] = mod;
+        } else if (i < 8) {
+          _modules[i + 1][8] = mod;
+        } else {
+          _modules[_moduleCount - 15 + i][8] = mod;
+        }
+      }
+
+      // horizontal
+      for (var i = 0; i < 15; i += 1) {
+
+        var mod = (!test && ( (bits >> i) & 1) == 1);
+
+        if (i < 8) {
+          _modules[8][_moduleCount - i - 1] = mod;
+        } else if (i < 9) {
+          _modules[8][15 - i - 1 + 1] = mod;
+        } else {
+          _modules[8][15 - i - 1] = mod;
+        }
+      }
+
+      // fixed module
+      _modules[_moduleCount - 8][8] = (!test);
+    };
+
+    var mapData = function(data, maskPattern) {
+
+      var inc = -1;
+      var row = _moduleCount - 1;
+      var bitIndex = 7;
+      var byteIndex = 0;
+      var maskFunc = QRUtil.getMaskFunction(maskPattern);
+
+      for (var col = _moduleCount - 1; col > 0; col -= 2) {
+
+        if (col == 6) col -= 1;
+
+        while (true) {
+
+          for (var c = 0; c < 2; c += 1) {
+
+            if (_modules[row][col - c] == null) {
+
+              var dark = false;
+
+              if (byteIndex < data.length) {
+                dark = ( ( (data[byteIndex] >>> bitIndex) & 1) == 1);
+              }
+
+              var mask = maskFunc(row, col - c);
+
+              if (mask) {
+                dark = !dark;
+              }
+
+              _modules[row][col - c] = dark;
+              bitIndex -= 1;
+
+              if (bitIndex == -1) {
+                byteIndex += 1;
+                bitIndex = 7;
+              }
+            }
+          }
+
+          row += inc;
+
+          if (row < 0 || _moduleCount <= row) {
+            row -= inc;
+            inc = -inc;
+            break;
+          }
+        }
+      }
+    };
+
+    var createBytes = function(buffer, rsBlocks) {
+
+      var offset = 0;
+
+      var maxDcCount = 0;
+      var maxEcCount = 0;
+
+      var dcdata = new Array(rsBlocks.length);
+      var ecdata = new Array(rsBlocks.length);
+
+      for (var r = 0; r < rsBlocks.length; r += 1) {
+
+        var dcCount = rsBlocks[r].dataCount;
+        var ecCount = rsBlocks[r].totalCount - dcCount;
+
+        maxDcCount = Math.max(maxDcCount, dcCount);
+        maxEcCount = Math.max(maxEcCount, ecCount);
+
+        dcdata[r] = new Array(dcCount);
+
+        for (var i = 0; i < dcdata[r].length; i += 1) {
+          dcdata[r][i] = 0xff & buffer.getBuffer()[i + offset];
+        }
+        offset += dcCount;
+
+        var rsPoly = QRUtil.getErrorCorrectPolynomial(ecCount);
+        var rawPoly = qrPolynomial(dcdata[r], rsPoly.getLength() - 1);
+
+        var modPoly = rawPoly.mod(rsPoly);
+        ecdata[r] = new Array(rsPoly.getLength() - 1);
+        for (var i = 0; i < ecdata[r].length; i += 1) {
+          var modIndex = i + modPoly.getLength() - ecdata[r].length;
+          ecdata[r][i] = (modIndex >= 0)? modPoly.getAt(modIndex) : 0;
+        }
+      }
+
+      var totalCodeCount = 0;
+      for (var i = 0; i < rsBlocks.length; i += 1) {
+        totalCodeCount += rsBlocks[i].totalCount;
+      }
+
+      var data = new Array(totalCodeCount);
+      var index = 0;
+
+      for (var i = 0; i < maxDcCount; i += 1) {
+        for (var r = 0; r < rsBlocks.length; r += 1) {
+          if (i < dcdata[r].length) {
+            data[index] = dcdata[r][i];
+            index += 1;
+          }
+        }
+      }
+
+      for (var i = 0; i < maxEcCount; i += 1) {
+        for (var r = 0; r < rsBlocks.length; r += 1) {
+          if (i < ecdata[r].length) {
+            data[index] = ecdata[r][i];
+            index += 1;
+          }
+        }
+      }
+
+      return data;
+    };
+
+    var createData = function(typeNumber, errorCorrectionLevel, dataList) {
+
+      var rsBlocks = QRRSBlock.getRSBlocks(typeNumber, errorCorrectionLevel);
+
+      var buffer = qrBitBuffer();
+
+      for (var i = 0; i < dataList.length; i += 1) {
+        var data = dataList[i];
+        buffer.put(data.getMode(), 4);
+        buffer.put(data.getLength(), QRUtil.getLengthInBits(data.getMode(), typeNumber) );
+        data.write(buffer);
+      }
+
+      // calc num max data.
+      var totalDataCount = 0;
+      for (var i = 0; i < rsBlocks.length; i += 1) {
+        totalDataCount += rsBlocks[i].dataCount;
+      }
+
+      if (buffer.getLengthInBits() > totalDataCount * 8) {
+        throw 'code length overflow. ('
+          + buffer.getLengthInBits()
+          + '>'
+          + totalDataCount * 8
+          + ')';
+      }
+
+      // end code
+      if (buffer.getLengthInBits() + 4 <= totalDataCount * 8) {
+        buffer.put(0, 4);
+      }
+
+      // padding
+      while (buffer.getLengthInBits() % 8 != 0) {
+        buffer.putBit(false);
+      }
+
+      // padding
+      while (true) {
+
+        if (buffer.getLengthInBits() >= totalDataCount * 8) {
+          break;
+        }
+        buffer.put(PAD0, 8);
+
+        if (buffer.getLengthInBits() >= totalDataCount * 8) {
+          break;
+        }
+        buffer.put(PAD1, 8);
+      }
+
+      return createBytes(buffer, rsBlocks);
+    };
+
+    _this.addData = function(data, mode) {
+
+      mode = mode || 'Byte';
+
+      var newData = null;
+
+      switch(mode) {
+      case 'Numeric' :
+        newData = qrNumber(data);
+        break;
+      case 'Alphanumeric' :
+        newData = qrAlphaNum(data);
+        break;
+      case 'Byte' :
+        newData = qr8BitByte(data);
+        break;
+      case 'Kanji' :
+        newData = qrKanji(data);
+        break;
+      default :
+        throw 'mode:' + mode;
+      }
+
+      _dataList.push(newData);
+      _dataCache = null;
+    };
+
+    _this.isDark = function(row, col) {
+      if (row < 0 || _moduleCount <= row || col < 0 || _moduleCount <= col) {
+        throw row + ',' + col;
+      }
+      return _modules[row][col];
+    };
+
+    _this.getModuleCount = function() {
+      return _moduleCount;
+    };
+
+    _this.make = function() {
+      if (_typeNumber < 1) {
+        var typeNumber = 1;
+
+        for (; typeNumber < 40; typeNumber++) {
+          var rsBlocks = QRRSBlock.getRSBlocks(typeNumber, _errorCorrectionLevel);
+          var buffer = qrBitBuffer();
+
+          for (var i = 0; i < _dataList.length; i++) {
+            var data = _dataList[i];
+            buffer.put(data.getMode(), 4);
+            buffer.put(data.getLength(), QRUtil.getLengthInBits(data.getMode(), typeNumber) );
+            data.write(buffer);
+          }
+
+          var totalDataCount = 0;
+          for (var i = 0; i < rsBlocks.length; i++) {
+            totalDataCount += rsBlocks[i].dataCount;
+          }
+
+          if (buffer.getLengthInBits() <= totalDataCount * 8) {
+            break;
+          }
+        }
+
+        _typeNumber = typeNumber;
+      }
+
+      makeImpl(false, getBestMaskPattern() );
+    };
+
+    _this.createTableTag = function(cellSize, margin) {
+
+      cellSize = cellSize || 2;
+      margin = (typeof margin == 'undefined')? cellSize * 4 : margin;
+
+      var qrHtml = '';
+
+      qrHtml += '<table style="';
+      qrHtml += ' border-width: 0px; border-style: none;';
+      qrHtml += ' border-collapse: collapse;';
+      qrHtml += ' padding: 0px; margin: ' + margin + 'px;';
+      qrHtml += '">';
+      qrHtml += '<tbody>';
+
+      for (var r = 0; r < _this.getModuleCount(); r += 1) {
+
+        qrHtml += '<tr>';
+
+        for (var c = 0; c < _this.getModuleCount(); c += 1) {
+          qrHtml += '<td style="';
+          qrHtml += ' border-width: 0px; border-style: none;';
+          qrHtml += ' border-collapse: collapse;';
+          qrHtml += ' padding: 0px; margin: 0px;';
+          qrHtml += ' width: ' + cellSize + 'px;';
+          qrHtml += ' height: ' + cellSize + 'px;';
+          qrHtml += ' background-color: ';
+          qrHtml += _this.isDark(r, c)? '#000000' : '#ffffff';
+          qrHtml += ';';
+          qrHtml += '"/>';
+        }
+
+        qrHtml += '</tr>';
+      }
+
+      qrHtml += '</tbody>';
+      qrHtml += '</table>';
+
+      return qrHtml;
+    };
+
+    _this.createSvgTag = function(cellSize, margin, alt, title) {
+
+      var opts = {};
+      if (typeof arguments[0] == 'object') {
+        // Called by options.
+        opts = arguments[0];
+        // overwrite cellSize and margin.
+        cellSize = opts.cellSize;
+        margin = opts.margin;
+        alt = opts.alt;
+        title = opts.title;
+      }
+
+      cellSize = cellSize || 2;
+      margin = (typeof margin == 'undefined')? cellSize * 4 : margin;
+
+      // Compose alt property surrogate
+      alt = (typeof alt === 'string') ? {text: alt} : alt || {};
+      alt.text = alt.text || null;
+      alt.id = (alt.text) ? alt.id || 'qrcode-description' : null;
+
+      // Compose title property surrogate
+      title = (typeof title === 'string') ? {text: title} : title || {};
+      title.text = title.text || null;
+      title.id = (title.text) ? title.id || 'qrcode-title' : null;
+
+      var size = _this.getModuleCount() * cellSize + margin * 2;
+      var c, mc, r, mr, qrSvg='', rect;
+
+      rect = 'l' + cellSize + ',0 0,' + cellSize +
+        ' -' + cellSize + ',0 0,-' + cellSize + 'z ';
+
+      qrSvg += '<svg version="1.1" xmlns="http://www.w3.org/2000/svg"';
+      qrSvg += !opts.scalable ? ' width="' + size + 'px" height="' + size + 'px"' : '';
+      qrSvg += ' viewBox="0 0 ' + size + ' ' + size + '" ';
+      qrSvg += ' preserveAspectRatio="xMinYMin meet"';
+      qrSvg += (title.text || alt.text) ? ' role="img" aria-labelledby="' +
+          escapeXml([title.id, alt.id].join(' ').trim() ) + '"' : '';
+      qrSvg += '>';
+      qrSvg += (title.text) ? '<title id="' + escapeXml(title.id) + '">' +
+          escapeXml(title.text) + '</title>' : '';
+      qrSvg += (alt.text) ? '<description id="' + escapeXml(alt.id) + '">' +
+          escapeXml(alt.text) + '</description>' : '';
+      qrSvg += '<rect width="100%" height="100%" fill="white" cx="0" cy="0"/>';
+      qrSvg += '<path d="';
+
+      for (r = 0; r < _this.getModuleCount(); r += 1) {
+        mr = r * cellSize + margin;
+        for (c = 0; c < _this.getModuleCount(); c += 1) {
+          if (_this.isDark(r, c) ) {
+            mc = c*cellSize+margin;
+            qrSvg += 'M' + mc + ',' + mr + rect;
+          }
+        }
+      }
+
+      qrSvg += '" stroke="transparent" fill="black"/>';
+      qrSvg += '</svg>';
+
+      return qrSvg;
+    };
+
+    _this.createDataURL = function(cellSize, margin) {
+
+      cellSize = cellSize || 2;
+      margin = (typeof margin == 'undefined')? cellSize * 4 : margin;
+
+      var size = _this.getModuleCount() * cellSize + margin * 2;
+      var min = margin;
+      var max = size - margin;
+
+      return createDataURL(size, size, function(x, y) {
+        if (min <= x && x < max && min <= y && y < max) {
+          var c = Math.floor( (x - min) / cellSize);
+          var r = Math.floor( (y - min) / cellSize);
+          return _this.isDark(r, c)? 0 : 1;
+        } else {
+          return 1;
+        }
+      } );
+    };
+
+    _this.createImgTag = function(cellSize, margin, alt) {
+
+      cellSize = cellSize || 2;
+      margin = (typeof margin == 'undefined')? cellSize * 4 : margin;
+
+      var size = _this.getModuleCount() * cellSize + margin * 2;
+
+      var img = '';
+      img += '<img';
+      img += '\u0020src="';
+      img += _this.createDataURL(cellSize, margin);
+      img += '"';
+      img += '\u0020width="';
+      img += size;
+      img += '"';
+      img += '\u0020height="';
+      img += size;
+      img += '"';
+      if (alt) {
+        img += '\u0020alt="';
+        img += escapeXml(alt);
+        img += '"';
+      }
+      img += '/>';
+
+      return img;
+    };
+
+    var escapeXml = function(s) {
+      var escaped = '';
+      for (var i = 0; i < s.length; i += 1) {
+        var c = s.charAt(i);
+        switch(c) {
+        case '<': escaped += '&lt;'; break;
+        case '>': escaped += '&gt;'; break;
+        case '&': escaped += '&amp;'; break;
+        case '"': escaped += '&quot;'; break;
+        default : escaped += c; break;
+        }
+      }
+      return escaped;
+    };
+
+    var _createHalfASCII = function(margin) {
+      var cellSize = 1;
+      margin = (typeof margin == 'undefined')? cellSize * 2 : margin;
+
+      var size = _this.getModuleCount() * cellSize + margin * 2;
+      var min = margin;
+      var max = size - margin;
+
+      var y, x, r1, r2, p;
+
+      var blocks = {
+        '██': '█',
+        '█ ': '▀',
+        ' █': '▄',
+        '  ': ' '
+      };
+
+      var blocksLastLineNoMargin = {
+        '██': '▀',
+        '█ ': '▀',
+        ' █': ' ',
+        '  ': ' '
+      };
+
+      var ascii = '';
+      for (y = 0; y < size; y += 2) {
+        r1 = Math.floor((y - min) / cellSize);
+        r2 = Math.floor((y + 1 - min) / cellSize);
+        for (x = 0; x < size; x += 1) {
+          p = '█';
+
+          if (min <= x && x < max && min <= y && y < max && _this.isDark(r1, Math.floor((x - min) / cellSize))) {
+            p = ' ';
+          }
+
+          if (min <= x && x < max && min <= y+1 && y+1 < max && _this.isDark(r2, Math.floor((x - min) / cellSize))) {
+            p += ' ';
+          }
+          else {
+            p += '█';
+          }
+
+          // Output 2 characters per pixel, to create full square. 1 character per pixels gives only half width of square.
+          ascii += (margin < 1 && y+1 >= max) ? blocksLastLineNoMargin[p] : blocks[p];
+        }
+
+        ascii += '\n';
+      }
+
+      if (size % 2 && margin > 0) {
+        return ascii.substring(0, ascii.length - size - 1) + Array(size+1).join('▀');
+      }
+
+      return ascii.substring(0, ascii.length-1);
+    };
+
+    _this.createASCII = function(cellSize, margin) {
+      cellSize = cellSize || 1;
+
+      if (cellSize < 2) {
+        return _createHalfASCII(margin);
+      }
+
+      cellSize -= 1;
+      margin = (typeof margin == 'undefined')? cellSize * 2 : margin;
+
+      var size = _this.getModuleCount() * cellSize + margin * 2;
+      var min = margin;
+      var max = size - margin;
+
+      var y, x, r, p;
+
+      var white = Array(cellSize+1).join('██');
+      var black = Array(cellSize+1).join('  ');
+
+      var ascii = '';
+      var line = '';
+      for (y = 0; y < size; y += 1) {
+        r = Math.floor( (y - min) / cellSize);
+        line = '';
+        for (x = 0; x < size; x += 1) {
+          p = 1;
+
+          if (min <= x && x < max && min <= y && y < max && _this.isDark(r, Math.floor((x - min) / cellSize))) {
+            p = 0;
+          }
+
+          // Output 2 characters per pixel, to create full square. 1 character per pixels gives only half width of square.
+          line += p ? white : black;
+        }
+
+        for (r = 0; r < cellSize; r += 1) {
+          ascii += line + '\n';
+        }
+      }
+
+      return ascii.substring(0, ascii.length-1);
+    };
+
+    _this.renderTo2dContext = function(context, cellSize) {
+      cellSize = cellSize || 2;
+      var length = _this.getModuleCount();
+      for (var row = 0; row < length; row++) {
+        for (var col = 0; col < length; col++) {
+          context.fillStyle = _this.isDark(row, col) ? 'black' : 'white';
+          context.fillRect(col * cellSize, row * cellSize, cellSize, cellSize);
+        }
+      }
+    }
+
+    return _this;
+  };
+
+  //---------------------------------------------------------------------
+  // qrcode.stringToBytes
+  //---------------------------------------------------------------------
+
+  qrcode.stringToBytesFuncs = {
+    'default' : function(s) {
+      var bytes = [];
+      for (var i = 0; i < s.length; i += 1) {
+        var c = s.charCodeAt(i);
+        bytes.push(c & 0xff);
+      }
+      return bytes;
+    }
+  };
+
+  qrcode.stringToBytes = qrcode.stringToBytesFuncs['default'];
+
+  //---------------------------------------------------------------------
+  // qrcode.createStringToBytes
+  //---------------------------------------------------------------------
+
+  /**
+   * @param unicodeData base64 string of byte array.
+   * [16bit Unicode],[16bit Bytes], ...
+   * @param numChars
+   */
+  qrcode.createStringToBytes = function(unicodeData, numChars) {
+
+    // create conversion map.
+
+    var unicodeMap = function() {
+
+      var bin = base64DecodeInputStream(unicodeData);
+      var read = function() {
+        var b = bin.read();
+        if (b == -1) throw 'eof';
+        return b;
+      };
+
+      var count = 0;
+      var unicodeMap = {};
+      while (true) {
+        var b0 = bin.read();
+        if (b0 == -1) break;
+        var b1 = read();
+        var b2 = read();
+        var b3 = read();
+        var k = String.fromCharCode( (b0 << 8) | b1);
+        var v = (b2 << 8) | b3;
+        unicodeMap[k] = v;
+        count += 1;
+      }
+      if (count != numChars) {
+        throw count + ' != ' + numChars;
+      }
+
+      return unicodeMap;
+    }();
+
+    var unknownChar = '?'.charCodeAt(0);
+
+    return function(s) {
+      var bytes = [];
+      for (var i = 0; i < s.length; i += 1) {
+        var c = s.charCodeAt(i);
+        if (c < 128) {
+          bytes.push(c);
+        } else {
+          var b = unicodeMap[s.charAt(i)];
+          if (typeof b == 'number') {
+            if ( (b & 0xff) == b) {
+              // 1byte
+              bytes.push(b);
+            } else {
+              // 2bytes
+              bytes.push(b >>> 8);
+              bytes.push(b & 0xff);
+            }
+          } else {
+            bytes.push(unknownChar);
+          }
+        }
+      }
+      return bytes;
+    };
+  };
+
+  //---------------------------------------------------------------------
+  // QRMode
+  //---------------------------------------------------------------------
+
+  var QRMode = {
+    MODE_NUMBER :    1 << 0,
+    MODE_ALPHA_NUM : 1 << 1,
+    MODE_8BIT_BYTE : 1 << 2,
+    MODE_KANJI :     1 << 3
+  };
+
+  //---------------------------------------------------------------------
+  // QRErrorCorrectionLevel
+  //---------------------------------------------------------------------
+
+  var QRErrorCorrectionLevel = {
+    L : 1,
+    M : 0,
+    Q : 3,
+    H : 2
+  };
+
+  //---------------------------------------------------------------------
+  // QRMaskPattern
+  //---------------------------------------------------------------------
+
+  var QRMaskPattern = {
+    PATTERN000 : 0,
+    PATTERN001 : 1,
+    PATTERN010 : 2,
+    PATTERN011 : 3,
+    PATTERN100 : 4,
+    PATTERN101 : 5,
+    PATTERN110 : 6,
+    PATTERN111 : 7
+  };
+
+  //---------------------------------------------------------------------
+  // QRUtil
+  //---------------------------------------------------------------------
+
+  var QRUtil = function() {
+
+    var PATTERN_POSITION_TABLE = [
+      [],
+      [6, 18],
+      [6, 22],
+      [6, 26],
+      [6, 30],
+      [6, 34],
+      [6, 22, 38],
+      [6, 24, 42],
+      [6, 26, 46],
+      [6, 28, 50],
+      [6, 30, 54],
+      [6, 32, 58],
+      [6, 34, 62],
+      [6, 26, 46, 66],
+      [6, 26, 48, 70],
+      [6, 26, 50, 74],
+      [6, 30, 54, 78],
+      [6, 30, 56, 82],
+      [6, 30, 58, 86],
+      [6, 34, 62, 90],
+      [6, 28, 50, 72, 94],
+      [6, 26, 50, 74, 98],
+      [6, 30, 54, 78, 102],
+      [6, 28, 54, 80, 106],
+      [6, 32, 58, 84, 110],
+      [6, 30, 58, 86, 114],
+      [6, 34, 62, 90, 118],
+      [6, 26, 50, 74, 98, 122],
+      [6, 30, 54, 78, 102, 126],
+      [6, 26, 52, 78, 104, 130],
+      [6, 30, 56, 82, 108, 134],
+      [6, 34, 60, 86, 112, 138],
+      [6, 30, 58, 86, 114, 142],
+      [6, 34, 62, 90, 118, 146],
+      [6, 30, 54, 78, 102, 126, 150],
+      [6, 24, 50, 76, 102, 128, 154],
+      [6, 28, 54, 80, 106, 132, 158],
+      [6, 32, 58, 84, 110, 136, 162],
+      [6, 26, 54, 82, 110, 138, 166],
+      [6, 30, 58, 86, 114, 142, 170]
+    ];
+    var G15 = (1 << 10) | (1 << 8) | (1 << 5) | (1 << 4) | (1 << 2) | (1 << 1) | (1 << 0);
+    var G18 = (1 << 12) | (1 << 11) | (1 << 10) | (1 << 9) | (1 << 8) | (1 << 5) | (1 << 2) | (1 << 0);
+    var G15_MASK = (1 << 14) | (1 << 12) | (1 << 10) | (1 << 4) | (1 << 1);
+
+    var _this = {};
+
+    var getBCHDigit = function(data) {
+      var digit = 0;
+      while (data != 0) {
+        digit += 1;
+        data >>>= 1;
+      }
+      return digit;
+    };
+
+    _this.getBCHTypeInfo = function(data) {
+      var d = data << 10;
+      while (getBCHDigit(d) - getBCHDigit(G15) >= 0) {
+        d ^= (G15 << (getBCHDigit(d) - getBCHDigit(G15) ) );
+      }
+      return ( (data << 10) | d) ^ G15_MASK;
+    };
+
+    _this.getBCHTypeNumber = function(data) {
+      var d = data << 12;
+      while (getBCHDigit(d) - getBCHDigit(G18) >= 0) {
+        d ^= (G18 << (getBCHDigit(d) - getBCHDigit(G18) ) );
+      }
+      return (data << 12) | d;
+    };
+
+    _this.getPatternPosition = function(typeNumber) {
+      return PATTERN_POSITION_TABLE[typeNumber - 1];
+    };
+
+    _this.getMaskFunction = function(maskPattern) {
+
+      switch (maskPattern) {
+
+      case QRMaskPattern.PATTERN000 :
+        return function(i, j) { return (i + j) % 2 == 0; };
+      case QRMaskPattern.PATTERN001 :
+        return function(i, j) { return i % 2 == 0; };
+      case QRMaskPattern.PATTERN010 :
+        return function(i, j) { return j % 3 == 0; };
+      case QRMaskPattern.PATTERN011 :
+        return function(i, j) { return (i + j) % 3 == 0; };
+      case QRMaskPattern.PATTERN100 :
+        return function(i, j) { return (Math.floor(i / 2) + Math.floor(j / 3) ) % 2 == 0; };
+      case QRMaskPattern.PATTERN101 :
+        return function(i, j) { return (i * j) % 2 + (i * j) % 3 == 0; };
+      case QRMaskPattern.PATTERN110 :
+        return function(i, j) { return ( (i * j) % 2 + (i * j) % 3) % 2 == 0; };
+      case QRMaskPattern.PATTERN111 :
+        return function(i, j) { return ( (i * j) % 3 + (i + j) % 2) % 2 == 0; };
+
+      default :
+        throw 'bad maskPattern:' + maskPattern;
+      }
+    };
+
+    _this.getErrorCorrectPolynomial = function(errorCorrectLength) {
+      var a = qrPolynomial([1], 0);
+      for (var i = 0; i < errorCorrectLength; i += 1) {
+        a = a.multiply(qrPolynomial([1, QRMath.gexp(i)], 0) );
+      }
+      return a;
+    };
+
+    _this.getLengthInBits = function(mode, type) {
+
+      if (1 <= type && type < 10) {
+
+        // 1 - 9
+
+        switch(mode) {
+        case QRMode.MODE_NUMBER    : return 10;
+        case QRMode.MODE_ALPHA_NUM : return 9;
+        case QRMode.MODE_8BIT_BYTE : return 8;
+        case QRMode.MODE_KANJI     : return 8;
+        default :
+          throw 'mode:' + mode;
+        }
+
+      } else if (type < 27) {
+
+        // 10 - 26
+
+        switch(mode) {
+        case QRMode.MODE_NUMBER    : return 12;
+        case QRMode.MODE_ALPHA_NUM : return 11;
+        case QRMode.MODE_8BIT_BYTE : return 16;
+        case QRMode.MODE_KANJI     : return 10;
+        default :
+          throw 'mode:' + mode;
+        }
+
+      } else if (type < 41) {
+
+        // 27 - 40
+
+        switch(mode) {
+        case QRMode.MODE_NUMBER    : return 14;
+        case QRMode.MODE_ALPHA_NUM : return 13;
+        case QRMode.MODE_8BIT_BYTE : return 16;
+        case QRMode.MODE_KANJI     : return 12;
+        default :
+          throw 'mode:' + mode;
+        }
+
+      } else {
+        throw 'type:' + type;
+      }
+    };
+
+    _this.getLostPoint = function(qrcode) {
+
+      var moduleCount = qrcode.getModuleCount();
+
+      var lostPoint = 0;
+
+      // LEVEL1
+
+      for (var row = 0; row < moduleCount; row += 1) {
+        for (var col = 0; col < moduleCount; col += 1) {
+
+          var sameCount = 0;
+          var dark = qrcode.isDark(row, col);
+
+          for (var r = -1; r <= 1; r += 1) {
+
+            if (row + r < 0 || moduleCount <= row + r) {
+              continue;
+            }
+
+            for (var c = -1; c <= 1; c += 1) {
+
+              if (col + c < 0 || moduleCount <= col + c) {
+                continue;
+              }
+
+              if (r == 0 && c == 0) {
+                continue;
+              }
+
+              if (dark == qrcode.isDark(row + r, col + c) ) {
+                sameCount += 1;
+              }
+            }
+          }
+
+          if (sameCount > 5) {
+            lostPoint += (3 + sameCount - 5);
+          }
+        }
+      };
+
+      // LEVEL2
+
+      for (var row = 0; row < moduleCount - 1; row += 1) {
+        for (var col = 0; col < moduleCount - 1; col += 1) {
+          var count = 0;
+          if (qrcode.isDark(row, col) ) count += 1;
+          if (qrcode.isDark(row + 1, col) ) count += 1;
+          if (qrcode.isDark(row, col + 1) ) count += 1;
+          if (qrcode.isDark(row + 1, col + 1) ) count += 1;
+          if (count == 0 || count == 4) {
+            lostPoint += 3;
+          }
+        }
+      }
+
+      // LEVEL3
+
+      for (var row = 0; row < moduleCount; row += 1) {
+        for (var col = 0; col < moduleCount - 6; col += 1) {
+          if (qrcode.isDark(row, col)
+              && !qrcode.isDark(row, col + 1)
+              &&  qrcode.isDark(row, col + 2)
+              &&  qrcode.isDark(row, col + 3)
+              &&  qrcode.isDark(row, col + 4)
+              && !qrcode.isDark(row, col + 5)
+              &&  qrcode.isDark(row, col + 6) ) {
+            lostPoint += 40;
+          }
+        }
+      }
+
+      for (var col = 0; col < moduleCount; col += 1) {
+        for (var row = 0; row < moduleCount - 6; row += 1) {
+          if (qrcode.isDark(row, col)
+              && !qrcode.isDark(row + 1, col)
+              &&  qrcode.isDark(row + 2, col)
+              &&  qrcode.isDark(row + 3, col)
+              &&  qrcode.isDark(row + 4, col)
+              && !qrcode.isDark(row + 5, col)
+              &&  qrcode.isDark(row + 6, col) ) {
+            lostPoint += 40;
+          }
+        }
+      }
+
+      // LEVEL4
+
+      var darkCount = 0;
+
+      for (var col = 0; col < moduleCount; col += 1) {
+        for (var row = 0; row < moduleCount; row += 1) {
+          if (qrcode.isDark(row, col) ) {
+            darkCount += 1;
+          }
+        }
+      }
+
+      var ratio = Math.abs(100 * darkCount / moduleCount / moduleCount - 50) / 5;
+      lostPoint += ratio * 10;
+
+      return lostPoint;
+    };
+
+    return _this;
+  }();
+
+  //---------------------------------------------------------------------
+  // QRMath
+  //---------------------------------------------------------------------
+
+  var QRMath = function() {
+
+    var EXP_TABLE = new Array(256);
+    var LOG_TABLE = new Array(256);
+
+    // initialize tables
+    for (var i = 0; i < 8; i += 1) {
+      EXP_TABLE[i] = 1 << i;
+    }
+    for (var i = 8; i < 256; i += 1) {
+      EXP_TABLE[i] = EXP_TABLE[i - 4]
+        ^ EXP_TABLE[i - 5]
+        ^ EXP_TABLE[i - 6]
+        ^ EXP_TABLE[i - 8];
+    }
+    for (var i = 0; i < 255; i += 1) {
+      LOG_TABLE[EXP_TABLE[i] ] = i;
+    }
+
+    var _this = {};
+
+    _this.glog = function(n) {
+
+      if (n < 1) {
+        throw 'glog(' + n + ')';
+      }
+
+      return LOG_TABLE[n];
+    };
+
+    _this.gexp = function(n) {
+
+      while (n < 0) {
+        n += 255;
+      }
+
+      while (n >= 256) {
+        n -= 255;
+      }
+
+      return EXP_TABLE[n];
+    };
+
+    return _this;
+  }();
+
+  //---------------------------------------------------------------------
+  // qrPolynomial
+  //---------------------------------------------------------------------
+
+  function qrPolynomial(num, shift) {
+
+    if (typeof num.length == 'undefined') {
+      throw num.length + '/' + shift;
+    }
+
+    var _num = function() {
+      var offset = 0;
+      while (offset < num.length && num[offset] == 0) {
+        offset += 1;
+      }
+      var _num = new Array(num.length - offset + shift);
+      for (var i = 0; i < num.length - offset; i += 1) {
+        _num[i] = num[i + offset];
+      }
+      return _num;
+    }();
+
+    var _this = {};
+
+    _this.getAt = function(index) {
+      return _num[index];
+    };
+
+    _this.getLength = function() {
+      return _num.length;
+    };
+
+    _this.multiply = function(e) {
+
+      var num = new Array(_this.getLength() + e.getLength() - 1);
+
+      for (var i = 0; i < _this.getLength(); i += 1) {
+        for (var j = 0; j < e.getLength(); j += 1) {
+          num[i + j] ^= QRMath.gexp(QRMath.glog(_this.getAt(i) ) + QRMath.glog(e.getAt(j) ) );
+        }
+      }
+
+      return qrPolynomial(num, 0);
+    };
+
+    _this.mod = function(e) {
+
+      if (_this.getLength() - e.getLength() < 0) {
+        return _this;
+      }
+
+      var ratio = QRMath.glog(_this.getAt(0) ) - QRMath.glog(e.getAt(0) );
+
+      var num = new Array(_this.getLength() );
+      for (var i = 0; i < _this.getLength(); i += 1) {
+        num[i] = _this.getAt(i);
+      }
+
+      for (var i = 0; i < e.getLength(); i += 1) {
+        num[i] ^= QRMath.gexp(QRMath.glog(e.getAt(i) ) + ratio);
+      }
+
+      // recursive call
+      return qrPolynomial(num, 0).mod(e);
+    };
+
+    return _this;
+  };
+
+  //---------------------------------------------------------------------
+  // QRRSBlock
+  //---------------------------------------------------------------------
+
+  var QRRSBlock = function() {
+
+    var RS_BLOCK_TABLE = [
+
+      // L
+      // M
+      // Q
+      // H
+
+      // 1
+      [1, 26, 19],
+      [1, 26, 16],
+      [1, 26, 13],
+      [1, 26, 9],
+
+      // 2
+      [1, 44, 34],
+      [1, 44, 28],
+      [1, 44, 22],
+      [1, 44, 16],
+
+      // 3
+      [1, 70, 55],
+      [1, 70, 44],
+      [2, 35, 17],
+      [2, 35, 13],
+
+      // 4
+      [1, 100, 80],
+      [2, 50, 32],
+      [2, 50, 24],
+      [4, 25, 9],
+
+      // 5
+      [1, 134, 108],
+      [2, 67, 43],
+      [2, 33, 15, 2, 34, 16],
+      [2, 33, 11, 2, 34, 12],
+
+      // 6
+      [2, 86, 68],
+      [4, 43, 27],
+      [4, 43, 19],
+      [4, 43, 15],
+
+      // 7
+      [2, 98, 78],
+      [4, 49, 31],
+      [2, 32, 14, 4, 33, 15],
+      [4, 39, 13, 1, 40, 14],
+
+      // 8
+      [2, 121, 97],
+      [2, 60, 38, 2, 61, 39],
+      [4, 40, 18, 2, 41, 19],
+      [4, 40, 14, 2, 41, 15],
+
+      // 9
+      [2, 146, 116],
+      [3, 58, 36, 2, 59, 37],
+      [4, 36, 16, 4, 37, 17],
+      [4, 36, 12, 4, 37, 13],
+
+      // 10
+      [2, 86, 68, 2, 87, 69],
+      [4, 69, 43, 1, 70, 44],
+      [6, 43, 19, 2, 44, 20],
+      [6, 43, 15, 2, 44, 16],
+
+      // 11
+      [4, 101, 81],
+      [1, 80, 50, 4, 81, 51],
+      [4, 50, 22, 4, 51, 23],
+      [3, 36, 12, 8, 37, 13],
+
+      // 12
+      [2, 116, 92, 2, 117, 93],
+      [6, 58, 36, 2, 59, 37],
+      [4, 46, 20, 6, 47, 21],
+      [7, 42, 14, 4, 43, 15],
+
+      // 13
+      [4, 133, 107],
+      [8, 59, 37, 1, 60, 38],
+      [8, 44, 20, 4, 45, 21],
+      [12, 33, 11, 4, 34, 12],
+
+      // 14
+      [3, 145, 115, 1, 146, 116],
+      [4, 64, 40, 5, 65, 41],
+      [11, 36, 16, 5, 37, 17],
+      [11, 36, 12, 5, 37, 13],
+
+      // 15
+      [5, 109, 87, 1, 110, 88],
+      [5, 65, 41, 5, 66, 42],
+      [5, 54, 24, 7, 55, 25],
+      [11, 36, 12, 7, 37, 13],
+
+      // 16
+      [5, 122, 98, 1, 123, 99],
+      [7, 73, 45, 3, 74, 46],
+      [15, 43, 19, 2, 44, 20],
+      [3, 45, 15, 13, 46, 16],
+
+      // 17
+      [1, 135, 107, 5, 136, 108],
+      [10, 74, 46, 1, 75, 47],
+      [1, 50, 22, 15, 51, 23],
+      [2, 42, 14, 17, 43, 15],
+
+      // 18
+      [5, 150, 120, 1, 151, 121],
+      [9, 69, 43, 4, 70, 44],
+      [17, 50, 22, 1, 51, 23],
+      [2, 42, 14, 19, 43, 15],
+
+      // 19
+      [3, 141, 113, 4, 142, 114],
+      [3, 70, 44, 11, 71, 45],
+      [17, 47, 21, 4, 48, 22],
+      [9, 39, 13, 16, 40, 14],
+
+      // 20
+      [3, 135, 107, 5, 136, 108],
+      [3, 67, 41, 13, 68, 42],
+      [15, 54, 24, 5, 55, 25],
+      [15, 43, 15, 10, 44, 16],
+
+      // 21
+      [4, 144, 116, 4, 145, 117],
+      [17, 68, 42],
+      [17, 50, 22, 6, 51, 23],
+      [19, 46, 16, 6, 47, 17],
+
+      // 22
+      [2, 139, 111, 7, 140, 112],
+      [17, 74, 46],
+      [7, 54, 24, 16, 55, 25],
+      [34, 37, 13],
+
+      // 23
+      [4, 151, 121, 5, 152, 122],
+      [4, 75, 47, 14, 76, 48],
+      [11, 54, 24, 14, 55, 25],
+      [16, 45, 15, 14, 46, 16],
+
+      // 24
+      [6, 147, 117, 4, 148, 118],
+      [6, 73, 45, 14, 74, 46],
+      [11, 54, 24, 16, 55, 25],
+      [30, 46, 16, 2, 47, 17],
+
+      // 25
+      [8, 132, 106, 4, 133, 107],
+      [8, 75, 47, 13, 76, 48],
+      [7, 54, 24, 22, 55, 25],
+      [22, 45, 15, 13, 46, 16],
+
+      // 26
+      [10, 142, 114, 2, 143, 115],
+      [19, 74, 46, 4, 75, 47],
+      [28, 50, 22, 6, 51, 23],
+      [33, 46, 16, 4, 47, 17],
+
+      // 27
+      [8, 152, 122, 4, 153, 123],
+      [22, 73, 45, 3, 74, 46],
+      [8, 53, 23, 26, 54, 24],
+      [12, 45, 15, 28, 46, 16],
+
+      // 28
+      [3, 147, 117, 10, 148, 118],
+      [3, 73, 45, 23, 74, 46],
+      [4, 54, 24, 31, 55, 25],
+      [11, 45, 15, 31, 46, 16],
+
+      // 29
+      [7, 146, 116, 7, 147, 117],
+      [21, 73, 45, 7, 74, 46],
+      [1, 53, 23, 37, 54, 24],
+      [19, 45, 15, 26, 46, 16],
+
+      // 30
+      [5, 145, 115, 10, 146, 116],
+      [19, 75, 47, 10, 76, 48],
+      [15, 54, 24, 25, 55, 25],
+      [23, 45, 15, 25, 46, 16],
+
+      // 31
+      [13, 145, 115, 3, 146, 116],
+      [2, 74, 46, 29, 75, 47],
+      [42, 54, 24, 1, 55, 25],
+      [23, 45, 15, 28, 46, 16],
+
+      // 32
+      [17, 145, 115],
+      [10, 74, 46, 23, 75, 47],
+      [10, 54, 24, 35, 55, 25],
+      [19, 45, 15, 35, 46, 16],
+
+      // 33
+      [17, 145, 115, 1, 146, 116],
+      [14, 74, 46, 21, 75, 47],
+      [29, 54, 24, 19, 55, 25],
+      [11, 45, 15, 46, 46, 16],
+
+      // 34
+      [13, 145, 115, 6, 146, 116],
+      [14, 74, 46, 23, 75, 47],
+      [44, 54, 24, 7, 55, 25],
+      [59, 46, 16, 1, 47, 17],
+
+      // 35
+      [12, 151, 121, 7, 152, 122],
+      [12, 75, 47, 26, 76, 48],
+      [39, 54, 24, 14, 55, 25],
+      [22, 45, 15, 41, 46, 16],
+
+      // 36
+      [6, 151, 121, 14, 152, 122],
+      [6, 75, 47, 34, 76, 48],
+      [46, 54, 24, 10, 55, 25],
+      [2, 45, 15, 64, 46, 16],
+
+      // 37
+      [17, 152, 122, 4, 153, 123],
+      [29, 74, 46, 14, 75, 47],
+      [49, 54, 24, 10, 55, 25],
+      [24, 45, 15, 46, 46, 16],
+
+      // 38
+      [4, 152, 122, 18, 153, 123],
+      [13, 74, 46, 32, 75, 47],
+      [48, 54, 24, 14, 55, 25],
+      [42, 45, 15, 32, 46, 16],
+
+      // 39
+      [20, 147, 117, 4, 148, 118],
+      [40, 75, 47, 7, 76, 48],
+      [43, 54, 24, 22, 55, 25],
+      [10, 45, 15, 67, 46, 16],
+
+      // 40
+      [19, 148, 118, 6, 149, 119],
+      [18, 75, 47, 31, 76, 48],
+      [34, 54, 24, 34, 55, 25],
+      [20, 45, 15, 61, 46, 16]
+    ];
+
+    var qrRSBlock = function(totalCount, dataCount) {
+      var _this = {};
+      _this.totalCount = totalCount;
+      _this.dataCount = dataCount;
+      return _this;
+    };
+
+    var _this = {};
+
+    var getRsBlockTable = function(typeNumber, errorCorrectionLevel) {
+
+      switch(errorCorrectionLevel) {
+      case QRErrorCorrectionLevel.L :
+        return RS_BLOCK_TABLE[(typeNumber - 1) * 4 + 0];
+      case QRErrorCorrectionLevel.M :
+        return RS_BLOCK_TABLE[(typeNumber - 1) * 4 + 1];
+      case QRErrorCorrectionLevel.Q :
+        return RS_BLOCK_TABLE[(typeNumber - 1) * 4 + 2];
+      case QRErrorCorrectionLevel.H :
+        return RS_BLOCK_TABLE[(typeNumber - 1) * 4 + 3];
+      default :
+        return undefined;
+      }
+    };
+
+    _this.getRSBlocks = function(typeNumber, errorCorrectionLevel) {
+
+      var rsBlock = getRsBlockTable(typeNumber, errorCorrectionLevel);
+
+      if (typeof rsBlock == 'undefined') {
+        throw 'bad rs block @ typeNumber:' + typeNumber +
+            '/errorCorrectionLevel:' + errorCorrectionLevel;
+      }
+
+      var length = rsBlock.length / 3;
+
+      var list = [];
+
+      for (var i = 0; i < length; i += 1) {
+
+        var count = rsBlock[i * 3 + 0];
+        var totalCount = rsBlock[i * 3 + 1];
+        var dataCount = rsBlock[i * 3 + 2];
+
+        for (var j = 0; j < count; j += 1) {
+          list.push(qrRSBlock(totalCount, dataCount) );
+        }
+      }
+
+      return list;
+    };
+
+    return _this;
+  }();
+
+  //---------------------------------------------------------------------
+  // qrBitBuffer
+  //---------------------------------------------------------------------
+
+  var qrBitBuffer = function() {
+
+    var _buffer = [];
+    var _length = 0;
+
+    var _this = {};
+
+    _this.getBuffer = function() {
+      return _buffer;
+    };
+
+    _this.getAt = function(index) {
+      var bufIndex = Math.floor(index / 8);
+      return ( (_buffer[bufIndex] >>> (7 - index % 8) ) & 1) == 1;
+    };
+
+    _this.put = function(num, length) {
+      for (var i = 0; i < length; i += 1) {
+        _this.putBit( ( (num >>> (length - i - 1) ) & 1) == 1);
+      }
+    };
+
+    _this.getLengthInBits = function() {
+      return _length;
+    };
+
+    _this.putBit = function(bit) {
+
+      var bufIndex = Math.floor(_length / 8);
+      if (_buffer.length <= bufIndex) {
+        _buffer.push(0);
+      }
+
+      if (bit) {
+        _buffer[bufIndex] |= (0x80 >>> (_length % 8) );
+      }
+
+      _length += 1;
+    };
+
+    return _this;
+  };
+
+  //---------------------------------------------------------------------
+  // qrNumber
+  //---------------------------------------------------------------------
+
+  var qrNumber = function(data) {
+
+    var _mode = QRMode.MODE_NUMBER;
+    var _data = data;
+
+    var _this = {};
+
+    _this.getMode = function() {
+      return _mode;
+    };
+
+    _this.getLength = function(buffer) {
+      return _data.length;
+    };
+
+    _this.write = function(buffer) {
+
+      var data = _data;
+
+      var i = 0;
+
+      while (i + 2 < data.length) {
+        buffer.put(strToNum(data.substring(i, i + 3) ), 10);
+        i += 3;
+      }
+
+      if (i < data.length) {
+        if (data.length - i == 1) {
+          buffer.put(strToNum(data.substring(i, i + 1) ), 4);
+        } else if (data.length - i == 2) {
+          buffer.put(strToNum(data.substring(i, i + 2) ), 7);
+        }
+      }
+    };
+
+    var strToNum = function(s) {
+      var num = 0;
+      for (var i = 0; i < s.length; i += 1) {
+        num = num * 10 + chatToNum(s.charAt(i) );
+      }
+      return num;
+    };
+
+    var chatToNum = function(c) {
+      if ('0' <= c && c <= '9') {
+        return c.charCodeAt(0) - '0'.charCodeAt(0);
+      }
+      throw 'illegal char :' + c;
+    };
+
+    return _this;
+  };
+
+  //---------------------------------------------------------------------
+  // qrAlphaNum
+  //---------------------------------------------------------------------
+
+  var qrAlphaNum = function(data) {
+
+    var _mode = QRMode.MODE_ALPHA_NUM;
+    var _data = data;
+
+    var _this = {};
+
+    _this.getMode = function() {
+      return _mode;
+    };
+
+    _this.getLength = function(buffer) {
+      return _data.length;
+    };
+
+    _this.write = function(buffer) {
+
+      var s = _data;
+
+      var i = 0;
+
+      while (i + 1 < s.length) {
+        buffer.put(
+          getCode(s.charAt(i) ) * 45 +
+          getCode(s.charAt(i + 1) ), 11);
+        i += 2;
+      }
+
+      if (i < s.length) {
+        buffer.put(getCode(s.charAt(i) ), 6);
+      }
+    };
+
+    var getCode = function(c) {
+
+      if ('0' <= c && c <= '9') {
+        return c.charCodeAt(0) - '0'.charCodeAt(0);
+      } else if ('A' <= c && c <= 'Z') {
+        return c.charCodeAt(0) - 'A'.charCodeAt(0) + 10;
+      } else {
+        switch (c) {
+        case ' ' : return 36;
+        case '$' : return 37;
+        case '%' : return 38;
+        case '*' : return 39;
+        case '+' : return 40;
+        case '-' : return 41;
+        case '.' : return 42;
+        case '/' : return 43;
+        case ':' : return 44;
+        default :
+          throw 'illegal char :' + c;
+        }
+      }
+    };
+
+    return _this;
+  };
+
+  //---------------------------------------------------------------------
+  // qr8BitByte
+  //---------------------------------------------------------------------
+
+  var qr8BitByte = function(data) {
+
+    var _mode = QRMode.MODE_8BIT_BYTE;
+    var _data = data;
+    var _bytes = qrcode.stringToBytes(data);
+
+    var _this = {};
+
+    _this.getMode = function() {
+      return _mode;
+    };
+
+    _this.getLength = function(buffer) {
+      return _bytes.length;
+    };
+
+    _this.write = function(buffer) {
+      for (var i = 0; i < _bytes.length; i += 1) {
+        buffer.put(_bytes[i], 8);
+      }
+    };
+
+    return _this;
+  };
+
+  //---------------------------------------------------------------------
+  // qrKanji
+  //---------------------------------------------------------------------
+
+  var qrKanji = function(data) {
+
+    var _mode = QRMode.MODE_KANJI;
+    var _data = data;
+
+    var stringToBytes = qrcode.stringToBytesFuncs['SJIS'];
+    if (!stringToBytes) {
+      throw 'sjis not supported.';
+    }
+    !function(c, code) {
+      // self test for sjis support.
+      var test = stringToBytes(c);
+      if (test.length != 2 || ( (test[0] << 8) | test[1]) != code) {
+        throw 'sjis not supported.';
+      }
+    }('\u53cb', 0x9746);
+
+    var _bytes = stringToBytes(data);
+
+    var _this = {};
+
+    _this.getMode = function() {
+      return _mode;
+    };
+
+    _this.getLength = function(buffer) {
+      return ~~(_bytes.length / 2);
+    };
+
+    _this.write = function(buffer) {
+
+      var data = _bytes;
+
+      var i = 0;
+
+      while (i + 1 < data.length) {
+
+        var c = ( (0xff & data[i]) << 8) | (0xff & data[i + 1]);
+
+        if (0x8140 <= c && c <= 0x9FFC) {
+          c -= 0x8140;
+        } else if (0xE040 <= c && c <= 0xEBBF) {
+          c -= 0xC140;
+        } else {
+          throw 'illegal char at ' + (i + 1) + '/' + c;
+        }
+
+        c = ( (c >>> 8) & 0xff) * 0xC0 + (c & 0xff);
+
+        buffer.put(c, 13);
+
+        i += 2;
+      }
+
+      if (i < data.length) {
+        throw 'illegal char at ' + (i + 1);
+      }
+    };
+
+    return _this;
+  };
+
+  //=====================================================================
+  // GIF Support etc.
+  //
+
+  //---------------------------------------------------------------------
+  // byteArrayOutputStream
+  //---------------------------------------------------------------------
+
+  var byteArrayOutputStream = function() {
+
+    var _bytes = [];
+
+    var _this = {};
+
+    _this.writeByte = function(b) {
+      _bytes.push(b & 0xff);
+    };
+
+    _this.writeShort = function(i) {
+      _this.writeByte(i);
+      _this.writeByte(i >>> 8);
+    };
+
+    _this.writeBytes = function(b, off, len) {
+      off = off || 0;
+      len = len || b.length;
+      for (var i = 0; i < len; i += 1) {
+        _this.writeByte(b[i + off]);
+      }
+    };
+
+    _this.writeString = function(s) {
+      for (var i = 0; i < s.length; i += 1) {
+        _this.writeByte(s.charCodeAt(i) );
+      }
+    };
+
+    _this.toByteArray = function() {
+      return _bytes;
+    };
+
+    _this.toString = function() {
+      var s = '';
+      s += '[';
+      for (var i = 0; i < _bytes.length; i += 1) {
+        if (i > 0) {
+          s += ',';
+        }
+        s += _bytes[i];
+      }
+      s += ']';
+      return s;
+    };
+
+    return _this;
+  };
+
+  //---------------------------------------------------------------------
+  // base64EncodeOutputStream
+  //---------------------------------------------------------------------
+
+  var base64EncodeOutputStream = function() {
+
+    var _buffer = 0;
+    var _buflen = 0;
+    var _length = 0;
+    var _base64 = '';
+
+    var _this = {};
+
+    var writeEncoded = function(b) {
+      _base64 += String.fromCharCode(encode(b & 0x3f) );
+    };
+
+    var encode = function(n) {
+      if (n < 0) {
+        // error.
+      } else if (n < 26) {
+        return 0x41 + n;
+      } else if (n < 52) {
+        return 0x61 + (n - 26);
+      } else if (n < 62) {
+        return 0x30 + (n - 52);
+      } else if (n == 62) {
+        return 0x2b;
+      } else if (n == 63) {
+        return 0x2f;
+      }
+      throw 'n:' + n;
+    };
+
+    _this.writeByte = function(n) {
+
+      _buffer = (_buffer << 8) | (n & 0xff);
+      _buflen += 8;
+      _length += 1;
+
+      while (_buflen >= 6) {
+        writeEncoded(_buffer >>> (_buflen - 6) );
+        _buflen -= 6;
+      }
+    };
+
+    _this.flush = function() {
+
+      if (_buflen > 0) {
+        writeEncoded(_buffer << (6 - _buflen) );
+        _buffer = 0;
+        _buflen = 0;
+      }
+
+      if (_length % 3 != 0) {
+        // padding
+        var padlen = 3 - _length % 3;
+        for (var i = 0; i < padlen; i += 1) {
+          _base64 += '=';
+        }
+      }
+    };
+
+    _this.toString = function() {
+      return _base64;
+    };
+
+    return _this;
+  };
+
+  //---------------------------------------------------------------------
+  // base64DecodeInputStream
+  //---------------------------------------------------------------------
+
+  var base64DecodeInputStream = function(str) {
+
+    var _str = str;
+    var _pos = 0;
+    var _buffer = 0;
+    var _buflen = 0;
+
+    var _this = {};
+
+    _this.read = function() {
+
+      while (_buflen < 8) {
+
+        if (_pos >= _str.length) {
+          if (_buflen == 0) {
+            return -1;
+          }
+          throw 'unexpected end of file./' + _buflen;
+        }
+
+        var c = _str.charAt(_pos);
+        _pos += 1;
+
+        if (c == '=') {
+          _buflen = 0;
+          return -1;
+        } else if (c.match(/^\s$/) ) {
+          // ignore if whitespace.
+          continue;
+        }
+
+        _buffer = (_buffer << 6) | decode(c.charCodeAt(0) );
+        _buflen += 6;
+      }
+
+      var n = (_buffer >>> (_buflen - 8) ) & 0xff;
+      _buflen -= 8;
+      return n;
+    };
+
+    var decode = function(c) {
+      if (0x41 <= c && c <= 0x5a) {
+        return c - 0x41;
+      } else if (0x61 <= c && c <= 0x7a) {
+        return c - 0x61 + 26;
+      } else if (0x30 <= c && c <= 0x39) {
+        return c - 0x30 + 52;
+      } else if (c == 0x2b) {
+        return 62;
+      } else if (c == 0x2f) {
+        return 63;
+      } else {
+        throw 'c:' + c;
+      }
+    };
+
+    return _this;
+  };
+
+  //---------------------------------------------------------------------
+  // gifImage (B/W)
+  //---------------------------------------------------------------------
+
+  var gifImage = function(width, height) {
+
+    var _width = width;
+    var _height = height;
+    var _data = new Array(width * height);
+
+    var _this = {};
+
+    _this.setPixel = function(x, y, pixel) {
+      _data[y * _width + x] = pixel;
+    };
+
+    _this.write = function(out) {
+
+      //---------------------------------
+      // GIF Signature
+
+      out.writeString('GIF87a');
+
+      //---------------------------------
+      // Screen Descriptor
+
+      out.writeShort(_width);
+      out.writeShort(_height);
+
+      out.writeByte(0x80); // 2bit
+      out.writeByte(0);
+      out.writeByte(0);
+
+      //---------------------------------
+      // Global Color Map
+
+      // black
+      out.writeByte(0x00);
+      out.writeByte(0x00);
+      out.writeByte(0x00);
+
+      // white
+      out.writeByte(0xff);
+      out.writeByte(0xff);
+      out.writeByte(0xff);
+
+      //---------------------------------
+      // Image Descriptor
+
+      out.writeString(',');
+      out.writeShort(0);
+      out.writeShort(0);
+      out.writeShort(_width);
+      out.writeShort(_height);
+      out.writeByte(0);
+
+      //---------------------------------
+      // Local Color Map
+
+      //---------------------------------
+      // Raster Data
+
+      var lzwMinCodeSize = 2;
+      var raster = getLZWRaster(lzwMinCodeSize);
+
+      out.writeByte(lzwMinCodeSize);
+
+      var offset = 0;
+
+      while (raster.length - offset > 255) {
+        out.writeByte(255);
+        out.writeBytes(raster, offset, 255);
+        offset += 255;
+      }
+
+      out.writeByte(raster.length - offset);
+      out.writeBytes(raster, offset, raster.length - offset);
+      out.writeByte(0x00);
+
+      //---------------------------------
+      // GIF Terminator
+      out.writeString(';');
+    };
+
+    var bitOutputStream = function(out) {
+
+      var _out = out;
+      var _bitLength = 0;
+      var _bitBuffer = 0;
+
+      var _this = {};
+
+      _this.write = function(data, length) {
+
+        if ( (data >>> length) != 0) {
+          throw 'length over';
+        }
+
+        while (_bitLength + length >= 8) {
+          _out.writeByte(0xff & ( (data << _bitLength) | _bitBuffer) );
+          length -= (8 - _bitLength);
+          data >>>= (8 - _bitLength);
+          _bitBuffer = 0;
+          _bitLength = 0;
+        }
+
+        _bitBuffer = (data << _bitLength) | _bitBuffer;
+        _bitLength = _bitLength + length;
+      };
+
+      _this.flush = function() {
+        if (_bitLength > 0) {
+          _out.writeByte(_bitBuffer);
+        }
+      };
+
+      return _this;
+    };
+
+    var getLZWRaster = function(lzwMinCodeSize) {
+
+      var clearCode = 1 << lzwMinCodeSize;
+      var endCode = (1 << lzwMinCodeSize) + 1;
+      var bitLength = lzwMinCodeSize + 1;
+
+      // Setup LZWTable
+      var table = lzwTable();
+
+      for (var i = 0; i < clearCode; i += 1) {
+        table.add(String.fromCharCode(i) );
+      }
+      table.add(String.fromCharCode(clearCode) );
+      table.add(String.fromCharCode(endCode) );
+
+      var byteOut = byteArrayOutputStream();
+      var bitOut = bitOutputStream(byteOut);
+
+      // clear code
+      bitOut.write(clearCode, bitLength);
+
+      var dataIndex = 0;
+
+      var s = String.fromCharCode(_data[dataIndex]);
+      dataIndex += 1;
+
+      while (dataIndex < _data.length) {
+
+        var c = String.fromCharCode(_data[dataIndex]);
+        dataIndex += 1;
+
+        if (table.contains(s + c) ) {
+
+          s = s + c;
+
+        } else {
+
+          bitOut.write(table.indexOf(s), bitLength);
+
+          if (table.size() < 0xfff) {
+
+            if (table.size() == (1 << bitLength) ) {
+              bitLength += 1;
+            }
+
+            table.add(s + c);
+          }
+
+          s = c;
+        }
+      }
+
+      bitOut.write(table.indexOf(s), bitLength);
+
+      // end code
+      bitOut.write(endCode, bitLength);
+
+      bitOut.flush();
+
+      return byteOut.toByteArray();
+    };
+
+    var lzwTable = function() {
+
+      var _map = {};
+      var _size = 0;
+
+      var _this = {};
+
+      _this.add = function(key) {
+        if (_this.contains(key) ) {
+          throw 'dup key:' + key;
+        }
+        _map[key] = _size;
+        _size += 1;
+      };
+
+      _this.size = function() {
+        return _size;
+      };
+
+      _this.indexOf = function(key) {
+        return _map[key];
+      };
+
+      _this.contains = function(key) {
+        return typeof _map[key] != 'undefined';
+      };
+
+      return _this;
+    };
+
+    return _this;
+  };
+
+  var createDataURL = function(width, height, getPixel) {
+    var gif = gifImage(width, height);
+    for (var y = 0; y < height; y += 1) {
+      for (var x = 0; x < width; x += 1) {
+        gif.setPixel(x, y, getPixel(x, y) );
+      }
+    }
+
+    var b = byteArrayOutputStream();
+    gif.write(b);
+
+    var base64 = base64EncodeOutputStream();
+    var bytes = b.toByteArray();
+    for (var i = 0; i < bytes.length; i += 1) {
+      base64.writeByte(bytes[i]);
+    }
+    base64.flush();
+
+    return 'data:image/gif;base64,' + base64;
+  };
+
+  //---------------------------------------------------------------------
+  // returns qrcode function.
+
+  return qrcode;
+}();
+
+// multibyte support
+!function() {
+
+  qrcode.stringToBytesFuncs['UTF-8'] = function(s) {
+    // http://stackoverflow.com/questions/18729405/how-to-convert-utf8-string-to-byte-array
+    function toUTF8Array(str) {
+      var utf8 = [];
+      for (var i=0; i < str.length; i++) {
+        var charcode = str.charCodeAt(i);
+        if (charcode < 0x80) utf8.push(charcode);
+        else if (charcode < 0x800) {
+          utf8.push(0xc0 | (charcode >> 6),
+              0x80 | (charcode & 0x3f));
+        }
+        else if (charcode < 0xd800 || charcode >= 0xe000) {
+          utf8.push(0xe0 | (charcode >> 12),
+              0x80 | ((charcode>>6) & 0x3f),
+              0x80 | (charcode & 0x3f));
+        }
+        // surrogate pair
+        else {
+          i++;
+          // UTF-16 encodes 0x10000-0x10FFFF by
+          // subtracting 0x10000 and splitting the
+          // 20 bits of 0x0-0xFFFFF into two halves
+          charcode = 0x10000 + (((charcode & 0x3ff)<<10)
+            | (str.charCodeAt(i) & 0x3ff));
+          utf8.push(0xf0 | (charcode >>18),
+              0x80 | ((charcode>>12) & 0x3f),
+              0x80 | ((charcode>>6) & 0x3f),
+              0x80 | (charcode & 0x3f));
+        }
+      }
+      return utf8;
+    }
+    return toUTF8Array(s);
+  };
+
+}();
+
+(function (factory) {
+  if (typeof define === 'function' && define.amd) {
+      define([], factory);
+  } else if (typeof exports === 'object') {
+      module.exports = factory();
+  }
+}(function () {
+    return qrcode;
+}));
+
+
+</script>
+
+<script>
+const WORDS = [
+  "abandon", "ability", "able", "about", "above", "absent", "absorb", "abstract", "absurd", "abuse", "access", "accident",
+  "account", "accuse", "achieve", "acid", "acoustic", "acquire", "across", "act", "action", "actor", "actress", "actual",
+  "adapt", "add", "addict", "address", "adjust", "admit", "adult", "advance", "advice", "aerobic", "affair", "afford",
+  "afraid", "again", "age", "agent", "agree", "ahead", "aim", "air", "airport", "aisle", "alarm", "album",
+  "alcohol", "alert", "alien", "all", "alley", "allow", "almost", "alone", "alpha", "already", "also", "alter",
+  "always", "amateur", "amazing", "among", "amount", "amused", "analyst", "anchor", "ancient", "anger", "angle", "angry",
+  "animal", "ankle", "announce", "annual", "another", "answer", "antenna", "antique", "anxiety", "any", "apart", "apology",
+  "appear", "apple", "approve", "april", "arch", "arctic", "area", "arena", "argue", "arm", "armed", "armor",
+  "army", "around", "arrange", "arrest", "arrive", "arrow", "art", "artefact", "artist", "artwork", "ask", "aspect",
+  "assault", "asset", "assist", "assume", "asthma", "athlete", "atom", "attack", "attend", "attitude", "attract", "auction",
+  "audit", "august", "aunt", "author", "auto", "autumn", "average", "avocado", "avoid", "awake", "aware", "away",
+  "awesome", "awful", "awkward", "axis", "baby", "bachelor", "bacon", "badge", "bag", "balance", "balcony", "ball",
+  "bamboo", "banana", "banner", "bar", "barely", "bargain", "barrel", "base", "basic", "basket", "battle", "beach",
+  "bean", "beauty", "because", "become", "beef", "before", "begin", "behave", "behind", "believe", "below", "belt",
+  "bench", "benefit", "best", "betray", "better", "between", "beyond", "bicycle", "bid", "bike", "bind", "biology",
+  "bird", "birth", "bitter", "black", "blade", "blame", "blanket", "blast", "bleak", "bless", "blind", "blood",
+  "blossom", "blouse", "blue", "blur", "blush", "board", "boat", "body", "boil", "bomb", "bone", "bonus",
+  "book", "boost", "border", "boring", "borrow", "boss", "bottom", "bounce", "box", "boy", "bracket", "brain",
+  "brand", "brass", "brave", "bread", "breeze", "brick", "bridge", "brief", "bright", "bring", "brisk", "broccoli",
+  "broken", "bronze", "broom", "brother", "brown", "brush", "bubble", "buddy", "budget", "buffalo", "build", "bulb",
+  "bulk", "bullet", "bundle", "bunker", "burden", "burger", "burst", "bus", "business", "busy", "butter", "buyer",
+  "buzz", "cabbage", "cabin", "cable", "cactus", "cage", "cake", "call", "calm", "camera", "camp", "can",
+  "canal", "cancel", "candy", "cannon", "canoe", "canvas", "canyon", "capable", "capital", "captain", "car", "carbon",
+  "card", "cargo", "carpet", "carry", "cart", "case", "cash", "casino", "castle", "casual", "cat", "catalog",
+  "catch", "category", "cattle", "caught", "cause", "caution", "cave", "ceiling", "celery", "cement", "census", "century",
+  "cereal", "certain", "chair", "chalk", "champion", "change", "chaos", "chapter", "charge", "chase", "chat", "cheap",
+  "check", "cheese", "chef", "cherry", "chest", "chicken", "chief", "child", "chimney", "choice", "choose", "chronic",
+  "chuckle", "chunk", "churn", "cigar", "cinnamon", "circle", "citizen", "city", "civil", "claim", "clap", "clarify",
+  "claw", "clay", "clean", "clerk", "clever", "click", "client", "cliff", "climb", "clinic", "clip", "clock",
+  "clog", "close", "cloth", "cloud", "clown", "club", "clump", "cluster", "clutch", "coach", "coast", "coconut",
+  "code", "coffee", "coil", "coin", "collect", "color", "column", "combine", "come", "comfort", "comic", "common",
+  "company", "concert", "conduct", "confirm", "congress", "connect", "consider", "control", "convince", "cook", "cool", "copper",
+  "copy", "coral", "core", "corn", "correct", "cost", "cotton", "couch", "country", "couple", "course", "cousin",
+  "cover", "coyote", "crack", "cradle", "craft", "cram", "crane", "crash", "crater", "crawl", "crazy", "cream",
+  "credit", "creek", "crew", "cricket", "crime", "crisp", "critic", "crop", "cross", "crouch", "crowd", "crucial",
+  "cruel", "cruise", "crumble", "crunch", "crush", "cry", "crystal", "cube", "culture", "cup", "cupboard", "curious",
+  "current", "curtain", "curve", "cushion", "custom", "cute", "cycle", "dad", "damage", "damp", "dance", "danger",
+  "daring", "dash", "daughter", "dawn", "day", "deal", "debate", "debris", "decade", "december", "decide", "decline",
+  "decorate", "decrease", "deer", "defense", "define", "defy", "degree", "delay", "deliver", "demand", "demise", "denial",
+  "dentist", "deny", "depart", "depend", "deposit", "depth", "deputy", "derive", "describe", "desert", "design", "desk",
+  "despair", "destroy", "detail", "detect", "develop", "device", "devote", "diagram", "dial", "diamond", "diary", "dice",
+  "diesel", "diet", "differ", "digital", "dignity", "dilemma", "dinner", "dinosaur", "direct", "dirt", "disagree", "discover",
+  "disease", "dish", "dismiss", "disorder", "display", "distance", "divert", "divide", "divorce", "dizzy", "doctor", "document",
+  "dog", "doll", "dolphin", "domain", "donate", "donkey", "donor", "door", "dose", "double", "dove", "draft",
+  "dragon", "drama", "drastic", "draw", "dream", "dress", "drift", "drill", "drink", "drip", "drive", "drop",
+  "drum", "dry", "duck", "dumb", "dune", "during", "dust", "dutch", "duty", "dwarf", "dynamic", "eager",
+  "eagle", "early", "earn", "earth", "easily", "east", "easy", "echo", "ecology", "economy", "edge", "edit",
+  "educate", "effort", "egg", "eight", "either", "elbow", "elder", "electric", "elegant", "element", "elephant", "elevator",
+  "elite", "else", "embark", "embody", "embrace", "emerge", "emotion", "employ", "empower", "empty", "enable", "enact",
+  "end", "endless", "endorse", "enemy", "energy", "enforce", "engage", "engine", "enhance", "enjoy", "enlist", "enough",
+  "enrich", "enroll", "ensure", "enter", "entire", "entry", "envelope", "episode", "equal", "equip", "era", "erase",
+  "erode", "erosion", "error", "erupt", "escape", "essay", "essence", "estate", "eternal", "ethics", "evidence", "evil",
+  "evoke", "evolve", "exact", "example", "excess", "exchange", "excite", "exclude", "excuse", "execute", "exercise", "exhaust",
+  "exhibit", "exile", "exist", "exit", "exotic", "expand", "expect", "expire", "explain", "expose", "express", "extend",
+  "extra", "eye", "eyebrow", "fabric", "face", "faculty", "fade", "faint", "faith", "fall", "false", "fame",
+  "family", "famous", "fan", "fancy", "fantasy", "farm", "fashion", "fat", "fatal", "father", "fatigue", "fault",
+  "favorite", "feature", "february", "federal", "fee", "feed", "feel", "female", "fence", "festival", "fetch", "fever",
+  "few", "fiber", "fiction", "field", "figure", "file", "film", "filter", "final", "find", "fine", "finger",
+  "finish", "fire", "firm", "first", "fiscal", "fish", "fit", "fitness", "fix", "flag", "flame", "flash",
+  "flat", "flavor", "flee", "flight", "flip", "float", "flock", "floor", "flower", "fluid", "flush", "fly",
+  "foam", "focus", "fog", "foil", "fold", "follow", "food", "foot", "force", "forest", "forget", "fork",
+  "fortune", "forum", "forward", "fossil", "foster", "found", "fox", "fragile", "frame", "frequent", "fresh", "friend",
+  "fringe", "frog", "front", "frost", "frown", "frozen", "fruit", "fuel", "fun", "funny", "furnace", "fury",
+  "future", "gadget", "gain", "galaxy", "gallery", "game", "gap", "garage", "garbage", "garden", "garlic", "garment",
+  "gas", "gasp", "gate", "gather", "gauge", "gaze", "general", "genius", "genre", "gentle", "genuine", "gesture",
+  "ghost", "giant", "gift", "giggle", "ginger", "giraffe", "girl", "give", "glad", "glance", "glare", "glass",
+  "glide", "glimpse", "globe", "gloom", "glory", "glove", "glow", "glue", "goat", "goddess", "gold", "good",
+  "goose", "gorilla", "gospel", "gossip", "govern", "gown", "grab", "grace", "grain", "grant", "grape", "grass",
+  "gravity", "great", "green", "grid", "grief", "grit", "grocery", "group", "grow", "grunt", "guard", "guess",
+  "guide", "guilt", "guitar", "gun", "gym", "habit", "hair", "half", "hammer", "hamster", "hand", "happy",
+  "harbor", "hard", "harsh", "harvest", "hat", "have", "hawk", "hazard", "head", "health", "heart", "heavy",
+  "hedgehog", "height", "hello", "helmet", "help", "hen", "hero", "hidden", "high", "hill", "hint", "hip",
+  "hire", "history", "hobby", "hockey", "hold", "hole", "holiday", "hollow", "home", "honey", "hood", "hope",
+  "horn", "horror", "horse", "hospital", "host", "hotel", "hour", "hover", "hub", "huge", "human", "humble",
+  "humor", "hundred", "hungry", "hunt", "hurdle", "hurry", "hurt", "husband", "hybrid", "ice", "icon", "idea",
+  "identify", "idle", "ignore", "ill", "illegal", "illness", "image", "imitate", "immense", "immune", "impact", "impose",
+  "improve", "impulse", "inch", "include", "income", "increase", "index", "indicate", "indoor", "industry", "infant", "inflict",
+  "inform", "inhale", "inherit", "initial", "inject", "injury", "inmate", "inner", "innocent", "input", "inquiry", "insane",
+  "insect", "inside", "inspire", "install", "intact", "interest", "into", "invest", "invite", "involve", "iron", "island",
+  "isolate", "issue", "item", "ivory", "jacket", "jaguar", "jar", "jazz", "jealous", "jeans", "jelly", "jewel",
+  "job", "join", "joke", "journey", "joy", "judge", "juice", "jump", "jungle", "junior", "junk", "just",
+  "kangaroo", "keen", "keep", "ketchup", "key", "kick", "kid", "kidney", "kind", "kingdom", "kiss", "kit",
+  "kitchen", "kite", "kitten", "kiwi", "knee", "knife", "knock", "know", "lab", "label", "labor", "ladder",
+  "lady", "lake", "lamp", "language", "laptop", "large", "later", "latin", "laugh", "laundry", "lava", "law",
+  "lawn", "lawsuit", "layer", "lazy", "leader", "leaf", "learn", "leave", "lecture", "left", "leg", "legal",
+  "legend", "leisure", "lemon", "lend", "length", "lens", "leopard", "lesson", "letter", "level", "liar", "liberty",
+  "library", "license", "life", "lift", "light", "like", "limb", "limit", "link", "lion", "liquid", "list",
+  "little", "live", "lizard", "load", "loan", "lobster", "local", "lock", "logic", "lonely", "long", "loop",
+  "lottery", "loud", "lounge", "love", "loyal", "lucky", "luggage", "lumber", "lunar", "lunch", "luxury", "lyrics",
+  "machine", "mad", "magic", "magnet", "maid", "mail", "main", "major", "make", "mammal", "man", "manage",
+  "mandate", "mango", "mansion", "manual", "maple", "marble", "march", "margin", "marine", "market", "marriage", "mask",
+  "mass", "master", "match", "material", "math", "matrix", "matter", "maximum", "maze", "meadow", "mean", "measure",
+  "meat", "mechanic", "medal", "media", "melody", "melt", "member", "memory", "mention", "menu", "mercy", "merge",
+  "merit", "merry", "mesh", "message", "metal", "method", "middle", "midnight", "milk", "million", "mimic", "mind",
+  "minimum", "minor", "minute", "miracle", "mirror", "misery", "miss", "mistake", "mix", "mixed", "mixture", "mobile",
+  "model", "modify", "mom", "moment", "monitor", "monkey", "monster", "month", "moon", "moral", "more", "morning",
+  "mosquito", "mother", "motion", "motor", "mountain", "mouse", "move", "movie", "much", "muffin", "mule", "multiply",
+  "muscle", "museum", "mushroom", "music", "must", "mutual", "myself", "mystery", "myth", "naive", "name", "napkin",
+  "narrow", "nasty", "nation", "nature", "near", "neck", "need", "negative", "neglect", "neither", "nephew", "nerve",
+  "nest", "net", "network", "neutral", "never", "news", "next", "nice", "night", "noble", "noise", "nominee",
+  "noodle", "normal", "north", "nose", "notable", "note", "nothing", "notice", "novel", "now", "nuclear", "number",
+  "nurse", "nut", "oak", "obey", "object", "oblige", "obscure", "observe", "obtain", "obvious", "occur", "ocean",
+  "october", "odor", "off", "offer", "office", "often", "oil", "okay", "old", "olive", "olympic", "omit",
+  "once", "one", "onion", "online", "only", "open", "opera", "opinion", "oppose", "option", "orange", "orbit",
+  "orchard", "order", "ordinary", "organ", "orient", "original", "orphan", "ostrich", "other", "outdoor", "outer", "output",
+  "outside", "oval", "oven", "over", "own", "owner", "oxygen", "oyster", "ozone", "pact", "paddle", "page",
+  "pair", "palace", "palm", "panda", "panel", "panic", "panther", "paper", "parade", "parent", "park", "parrot",
+  "party", "pass", "patch", "path", "patient", "patrol", "pattern", "pause", "pave", "payment", "peace", "peanut",
+  "pear", "peasant", "pelican", "pen", "penalty", "pencil", "people", "pepper", "perfect", "permit", "person", "pet",
+  "phone", "photo", "phrase", "physical", "piano", "picnic", "picture", "piece", "pig", "pigeon", "pill", "pilot",
+  "pink", "pioneer", "pipe", "pistol", "pitch", "pizza", "place", "planet", "plastic", "plate", "play", "please",
+  "pledge", "pluck", "plug", "plunge", "poem", "poet", "point", "polar", "pole", "police", "pond", "pony",
+  "pool", "popular", "portion", "position", "possible", "post", "potato", "pottery", "poverty", "powder", "power", "practice",
+  "praise", "predict", "prefer", "prepare", "present", "pretty", "prevent", "price", "pride", "primary", "print", "priority",
+  "prison", "private", "prize", "problem", "process", "produce", "profit", "program", "project", "promote", "proof", "property",
+  "prosper", "protect", "proud", "provide", "public", "pudding", "pull", "pulp", "pulse", "pumpkin", "punch", "pupil",
+  "puppy", "purchase", "purity", "purpose", "purse", "push", "put", "puzzle", "pyramid", "quality", "quantum", "quarter",
+  "question", "quick", "quit", "quiz", "quote", "rabbit", "raccoon", "race", "rack", "radar", "radio", "rail",
+  "rain", "raise", "rally", "ramp", "ranch", "random", "range", "rapid", "rare", "rate", "rather", "raven",
+  "raw", "razor", "ready", "real", "reason", "rebel", "rebuild", "recall", "receive", "recipe", "record", "recycle",
+  "reduce", "reflect", "reform", "refuse", "region", "regret", "regular", "reject", "relax", "release", "relief", "rely",
+  "remain", "remember", "remind", "remove", "render", "renew", "rent", "reopen", "repair", "repeat", "replace", "report",
+  "require", "rescue", "resemble", "resist", "resource", "response", "result", "retire", "retreat", "return", "reunion", "reveal",
+  "review", "reward", "rhythm", "rib", "ribbon", "rice", "rich", "ride", "ridge", "rifle", "right", "rigid",
+  "ring", "riot", "ripple", "risk", "ritual", "rival", "river", "road", "roast", "robot", "robust", "rocket",
+  "romance", "roof", "rookie", "room", "rose", "rotate", "rough", "round", "route", "royal", "rubber", "rude",
+  "rug", "rule", "run", "runway", "rural", "sad", "saddle", "sadness", "safe", "sail", "salad", "salmon",
+  "salon", "salt", "salute", "same", "sample", "sand", "satisfy", "satoshi", "sauce", "sausage", "save", "say",
+  "scale", "scan", "scare", "scatter", "scene", "scheme", "school", "science", "scissors", "scorpion", "scout", "scrap",
+  "screen", "script", "scrub", "sea", "search", "season", "seat", "second", "secret", "section", "security", "seed",
+  "seek", "segment", "select", "sell", "seminar", "senior", "sense", "sentence", "series", "service", "session", "settle",
+  "setup", "seven", "shadow", "shaft", "shallow", "share", "shed", "shell", "sheriff", "shield", "shift", "shine",
+  "ship", "shiver", "shock", "shoe", "shoot", "shop", "short", "shoulder", "shove", "shrimp", "shrug", "shuffle",
+  "shy", "sibling", "sick", "side", "siege", "sight", "sign", "silent", "silk", "silly", "silver", "similar",
+  "simple", "since", "sing", "siren", "sister", "situate", "six", "size", "skate", "sketch", "ski", "skill",
+  "skin", "skirt", "skull", "slab", "slam", "sleep", "slender", "slice", "slide", "slight", "slim", "slogan",
+  "slot", "slow", "slush", "small", "smart", "smile", "smoke", "smooth", "snack", "snake", "snap", "sniff",
+  "snow", "soap", "soccer", "social", "sock", "soda", "soft", "solar", "soldier", "solid", "solution", "solve",
+  "someone", "song", "soon", "sorry", "sort", "soul", "sound", "soup", "source", "south", "space", "spare",
+  "spatial", "spawn", "speak", "special", "speed", "spell", "spend", "sphere", "spice", "spider", "spike", "spin",
+  "spirit", "split", "spoil", "sponsor", "spoon", "sport", "spot", "spray", "spread", "spring", "spy", "square",
+  "squeeze", "squirrel", "stable", "stadium", "staff", "stage", "stairs", "stamp", "stand", "start", "state", "stay",
+  "steak", "steel", "stem", "step", "stereo", "stick", "still", "sting", "stock", "stomach", "stone", "stool",
+  "story", "stove", "strategy", "street", "strike", "strong", "struggle", "student", "stuff", "stumble", "style", "subject",
+  "submit", "subway", "success", "such", "sudden", "suffer", "sugar", "suggest", "suit", "summer", "sun", "sunny",
+  "sunset", "super", "supply", "supreme", "sure", "surface", "surge", "surprise", "surround", "survey", "suspect", "sustain",
+  "swallow", "swamp", "swap", "swarm", "swear", "sweet", "swift", "swim", "swing", "switch", "sword", "symbol",
+  "symptom", "syrup", "system", "table", "tackle", "tag", "tail", "talent", "talk", "tank", "tape", "target",
+  "task", "taste", "tattoo", "taxi", "teach", "team", "tell", "ten", "tenant", "tennis", "tent", "term",
+  "test", "text", "thank", "that", "theme", "then", "theory", "there", "they", "thing", "this", "thought",
+  "three", "thrive", "throw", "thumb", "thunder", "ticket", "tide", "tiger", "tilt", "timber", "time", "tiny",
+  "tip", "tired", "tissue", "title", "toast", "tobacco", "today", "toddler", "toe", "together", "toilet", "token",
+  "tomato", "tomorrow", "tone", "tongue", "tonight", "tool", "tooth", "top", "topic", "topple", "torch", "tornado",
+  "tortoise", "toss", "total", "tourist", "toward", "tower", "town", "toy", "track", "trade", "traffic", "tragic",
+  "train", "transfer", "trap", "trash", "travel", "tray", "treat", "tree", "trend", "trial", "tribe", "trick",
+  "trigger", "trim", "trip", "trophy", "trouble", "truck", "true", "truly", "trumpet", "trust", "truth", "try",
+  "tube", "tuition", "tumble", "tuna", "tunnel", "turkey", "turn", "turtle", "twelve", "twenty", "twice", "twin",
+  "twist", "two", "type", "typical", "ugly", "umbrella", "unable", "unaware", "uncle", "uncover", "under", "undo",
+  "unfair", "unfold", "unhappy", "uniform", "unique", "unit", "universe", "unknown", "unlock", "until", "unusual", "unveil",
+  "update", "upgrade", "uphold", "upon", "upper", "upset", "urban", "urge", "usage", "use", "used", "useful",
+  "useless", "usual", "utility", "vacant", "vacuum", "vague", "valid", "valley", "valve", "van", "vanish", "vapor",
+  "various", "vast", "vault", "vehicle", "velvet", "vendor", "venture", "venue", "verb", "verify", "version", "very",
+  "vessel", "veteran", "viable", "vibrant", "vicious", "victory", "video", "view", "village", "vintage", "violin", "virtual",
+  "virus", "visa", "visit", "visual", "vital", "vivid", "vocal", "voice", "void", "volcano", "volume", "vote",
+  "voyage", "wage", "wagon", "wait", "walk", "wall", "walnut", "want", "warfare", "warm", "warrior", "wash",
+  "wasp", "waste", "water", "wave", "way", "wealth", "weapon", "wear", "weasel", "weather", "web", "wedding",
+  "weekend", "weird", "welcome", "west", "wet", "whale", "what", "wheat", "wheel", "when", "where", "whip",
+  "whisper", "wide", "width", "wife", "wild", "will", "win", "window", "wine", "wing", "wink", "winner",
+  "winter", "wire", "wisdom", "wise", "wish", "witness", "wolf", "woman", "wonder", "wood", "wool", "word",
+  "work", "world", "worry", "worth", "wrap", "wreck", "wrestle", "wrist", "write", "wrong", "yard", "year",
+  "yellow", "you", "young", "youth", "zebra", "zero", "zone", "zoo"
+];
+
+function sha256(bytes) {
+  const K = [
+    0x428a2f98,0x71374491,0xb5c0fbcf,0xe9b5dba5,0x3956c25b,0x59f111f1,0x923f82a4,0xab1c5ed5,
+    0xd807aa98,0x12835b01,0x243185be,0x550c7dc3,0x72be5d74,0x80deb1fe,0x9bdc06a7,0xc19bf174,
+    0xe49b69c1,0xefbe4786,0x0fc19dc6,0x240ca1cc,0x2de92c6f,0x4a7484aa,0x5cb0a9dc,0x76f988da,
+    0x983e5152,0xa831c66d,0xb00327c8,0xbf597fc7,0xc6e00bf3,0xd5a79147,0x06ca6351,0x14292967,
+    0x27b70a85,0x2e1b2138,0x4d2c6dfc,0x53380d13,0x650a7354,0x766a0abb,0x81c2c92e,0x92722c85,
+    0xa2bfe8a1,0xa81a664b,0xc24b8b70,0xc76c51a3,0xd192e819,0xd6990624,0xf40e3585,0x106aa070,
+    0x19a4c116,0x1e376c08,0x2748774c,0x34b0bcb5,0x391c0cb3,0x4ed8aa4a,0x5b9cca4f,0x682e6ff3,
+    0x748f82ee,0x78a5636f,0x84c87814,0x8cc70208,0x90befffa,0xa4506ceb,0xbef9a3f7,0xc67178f2
+  ];
+  function rotr(x, n) { return (x >>> n) | (x << (32 - n)); }
+  const arr = Array.from(bytes);
+  const bitLen = arr.length * 8;
+  arr.push(0x80);
+  while ((arr.length % 64) !== 56) arr.push(0);
+  const hi = Math.floor(bitLen / 0x100000000);
+  const lo = bitLen >>> 0;
+  arr.push((hi >>> 24) & 255, (hi >>> 16) & 255, (hi >>> 8) & 255, hi & 255,
+           (lo >>> 24) & 255, (lo >>> 16) & 255, (lo >>> 8) & 255, lo & 255);
+  let h0=0x6a09e667,h1=0xbb67ae85,h2=0x3c6ef372,h3=0xa54ff53a,h4=0x510e527f,h5=0x9b05688c,h6=0x1f83d9ab,h7=0x5be0cd19;
+  const w = new Array(64);
+  for (let i = 0; i < arr.length; i += 64) {
+    for (let t = 0; t < 16; t++) {
+      const j = i + t * 4;
+      w[t] = ((arr[j] << 24) | (arr[j+1] << 16) | (arr[j+2] << 8) | arr[j+3]) >>> 0;
+    }
+    for (let t = 16; t < 64; t++) {
+      const s0 = rotr(w[t-15],7) ^ rotr(w[t-15],18) ^ (w[t-15] >>> 3);
+      const s1 = rotr(w[t-2],17) ^ rotr(w[t-2],19) ^ (w[t-2] >>> 10);
+      w[t] = (w[t-16] + s0 + w[t-7] + s1) >>> 0;
+    }
+    let a=h0,b=h1,c=h2,d=h3,e=h4,f=h5,g=h6,h=h7;
+    for (let t = 0; t < 64; t++) {
+      const S1 = rotr(e,6) ^ rotr(e,11) ^ rotr(e,25);
+      const ch = (e & f) ^ (~e & g);
+      const t1 = (h + S1 + ch + K[t] + w[t]) >>> 0;
+      const S0 = rotr(a,2) ^ rotr(a,13) ^ rotr(a,22);
+      const maj = (a & b) ^ (a & c) ^ (b & c);
+      const t2 = (S0 + maj) >>> 0;
+      h=g; g=f; f=e; e=(d + t1) >>> 0; d=c; c=b; b=a; a=(t1 + t2) >>> 0;
+    }
+    h0=(h0+a)>>>0; h1=(h1+b)>>>0; h2=(h2+c)>>>0; h3=(h3+d)>>>0;
+    h4=(h4+e)>>>0; h5=(h5+f)>>>0; h6=(h6+g)>>>0; h7=(h7+h)>>>0;
+  }
+  const out = new Uint8Array(32);
+  const hs = [h0,h1,h2,h3,h4,h5,h6,h7];
+  for (let i = 0; i < 8; i++) {
+    out[i*4] = (hs[i] >>> 24) & 255;
+    out[i*4+1] = (hs[i] >>> 16) & 255;
+    out[i*4+2] = (hs[i] >>> 8) & 255;
+    out[i*4+3] = hs[i] & 255;
+  }
+  return out;
+}
+
+function sha256str(s) {
+  const bytes = new Uint8Array(s.length);
+  for (let i = 0; i < s.length; i++) bytes[i] = s.charCodeAt(i) & 255;
+  return sha256(bytes);
+}
+function hex(u8) {
+  return Array.from(u8).map(b => b.toString(16).padStart(2, "0")).join("");
+}
+
+const enc = new TextEncoder();
+function bigToBytes(v, len){
+  const out = new Uint8Array(len);
+  for (let i=len-1; i>=0; i--){ out[i] = Number(v & 255n); v >>= 8n; }
+  return out;
+}
+
+
+/* SHA-512 / HMAC / PBKDF2 */
+const K512 = [
+0x428a2f98d728ae22n,0x7137449123ef65cdn,0xb5c0fbcfec4d3b2fn,0xe9b5dba58189dbbcn,
+0x3956c25bf348b538n,0x59f111f1b605d019n,0x923f82a4af194f9bn,0xab1c5ed5da6d8118n,
+0xd807aa98a3030242n,0x12835b0145706fben,0x243185be4ee4b28cn,0x550c7dc3d5ffb4e2n,
+0x72be5d74f27b896fn,0x80deb1fe3b1696b1n,0x9bdc06a725c71235n,0xc19bf174cf692694n,
+0xe49b69c19ef14ad2n,0xefbe4786384f25e3n,0x0fc19dc68b8cd5b5n,0x240ca1cc77ac9c65n,
+0x2de92c6f592b0275n,0x4a7484aa6ea6e483n,0x5cb0a9dcbd41fbd4n,0x76f988da831153b5n,
+0x983e5152ee66dfabn,0xa831c66d2db43210n,0xb00327c898fb213fn,0xbf597fc7beef0ee4n,
+0xc6e00bf33da88fc2n,0xd5a79147930aa725n,0x06ca6351e003826fn,0x142929670a0e6e70n,
+0x27b70a8546d22ffcn,0x2e1b21385c26c926n,0x4d2c6dfc5ac42aedn,0x53380d139d95b3dfn,
+0x650a73548baf63den,0x766a0abb3c77b2a8n,0x81c2c92e47edaee6n,0x92722c851482353bn,
+0xa2bfe8a14cf10364n,0xa81a664bbc423001n,0xc24b8b70d0f89791n,0xc76c51a30654be30n,
+0xd192e819d6ef5218n,0xd69906245565a910n,0xf40e35855771202an,0x106aa07032bbd1b8n,
+0x19a4c116b8d2d0c8n,0x1e376c085141ab53n,0x2748774cdf8eeb99n,0x34b0bcb5e19b48a8n,
+0x391c0cb3c5c95a63n,0x4ed8aa4ae3418acbn,0x5b9cca4f7763e373n,0x682e6ff3d6b2b8a3n,
+0x748f82ee5defb2fcn,0x78a5636f43172f60n,0x84c87814a1f0ab72n,0x8cc702081a6439ecn,
+0x90befffa23631e28n,0xa4506cebde82bde9n,0xbef9a3f7b2c67915n,0xc67178f2e372532bn,
+0xca273eceea26619cn,0xd186b8c721c0c207n,0xeada7dd6cde0eb1en,0xf57d4f7fee6ed178n,
+0x06f067aa72176fban,0x0a637dc5a2c898a6n,0x113f9804bef90daen,0x1b710b35131c471bn,
+0x28db77f523047d84n,0x32caab7b40c72493n,0x3c9ebe0a15c9bebcn,0x431d67c49c100d4cn,
+0x4cc5d4becb3e42b6n,0x597f299cfc657e2an,0x5fcb6fab3ad6faecn,0x6c44198c4a475817n
+];
+const MASK64 = (1n<<64n) - 1n;
+function rotr64(x,n){ return ((x >> BigInt(n)) | (x << BigInt(64-n))) & MASK64; }
+
+function sha512(bytes){
+  const len = bytes.length;
+  const bitLen = BigInt(len) * 8n;
+  const padded = ((((len + 17) + 127) >> 7) << 7);
+  const buf = new Uint8Array(padded);
+  buf.set(bytes);
+  buf[len] = 0x80;
+  const dv = new DataView(buf.buffer);
+  dv.setUint32(padded - 4, Number(bitLen & 0xffffffffn));
+  dv.setUint32(padded - 8, Number((bitLen >> 32n) & 0xffffffffn));
+  let h0=0x6a09e667f3bcc908n,h1=0xbb67ae8584caa73bn,h2=0x3c6ef372fe94f82bn,h3=0xa54ff53a5f1d36f1n,
+      h4=0x510e527fade682d1n,h5=0x9b05688c2b3e6c1fn,h6=0x1f83d9abfb41bd6bn,h7=0x5be0cd19137e2179n;
+  const w = new Array(80);
+  for (let off=0; off<padded; off+=128){
+    for (let i=0;i<16;i++){
+      const hi = dv.getUint32(off + i*8);
+      const lo = dv.getUint32(off + i*8 + 4);
+      w[i] = (BigInt(hi) << 32n) | BigInt(lo);
+    }
+    for (let i=16;i<80;i++){
+      const a1=w[i-15], b1=w[i-2];
+      const s0 = rotr64(a1,1) ^ rotr64(a1,8) ^ (a1 >> 7n);
+      const s1 = rotr64(b1,19) ^ rotr64(b1,61) ^ (b1 >> 6n);
+      w[i] = (w[i-16] + s0 + w[i-7] + s1) & MASK64;
+    }
+    let a=h0,b=h1,c=h2,d=h3,e=h4,f=h5,g=h6,h=h7;
+    for (let i=0;i<80;i++){
+      const S1 = rotr64(e,14) ^ rotr64(e,18) ^ rotr64(e,41);
+      const ch = (e & f) ^ ((~e) & g);
+      const t1 = (h + S1 + ch + K512[i] + w[i]) & MASK64;
+      const S0 = rotr64(a,28) ^ rotr64(a,34) ^ rotr64(a,39);
+      const mj = (a & b) ^ (a & c) ^ (b & c);
+      const t2 = (S0 + mj) & MASK64;
+      h=g; g=f; f=e; e=(d+t1)&MASK64; d=c; c=b; b=a; a=(t1+t2)&MASK64;
+    }
+    h0=(h0+a)&MASK64; h1=(h1+b)&MASK64; h2=(h2+c)&MASK64; h3=(h3+d)&MASK64;
+    h4=(h4+e)&MASK64; h5=(h5+f)&MASK64; h6=(h6+g)&MASK64; h7=(h7+h)&MASK64;
+  }
+  const out = new Uint8Array(64);
+  [h0,h1,h2,h3,h4,h5,h6,h7].forEach((v,i)=>{
+    const odv = new DataView(out.buffer);
+    odv.setUint32(i*8, Number((v >> 32n) & 0xffffffffn));
+    odv.setUint32(i*8+4, Number(v & 0xffffffffn));
+  });
+  return out;
+}
+
+function hmacSha512(key, data){
+  if (key.length > 128) key = sha512(key);
+  const k = new Uint8Array(128);
+  k.set(key);
+  const ipad = new Uint8Array(128 + data.length);
+  const opad = new Uint8Array(128 + 64);
+  for (let i=0;i<128;i++){
+    ipad[i] = k[i] ^ 0x36;
+    opad[i] = k[i] ^ 0x5c;
+  }
+  ipad.set(data, 128);
+  opad.set(sha512(ipad), 128);
+  return sha512(opad);
+}
+
+function pbkdf2Hmac512(pw, salt, iter, dkLen){
+  const out = new Uint8Array(dkLen);
+  const blocks = Math.ceil(dkLen / 64);
+  for (let i=1;i<=blocks;i++){
+    const block = new Uint8Array(salt.length + 4);
+    block.set(salt);
+    new DataView(block.buffer).setUint32(salt.length, i);
+    let u = hmacSha512(pw, block);
+    const t = u.slice();
+    for (let j=1;j<iter;j++){
+      u = hmacSha512(pw, u);
+      for (let k=0;k<64;k++) t[k] ^= u[k];
+    }
+    const dest = (i-1)*64;
+    out.set(t.subarray(0, Math.min(64, dkLen - dest)), dest);
+  }
+  return out;
+}
+
+function bitsToBytes(bitStr) {
+  if (bitStr.length % 8 !== 0) throw new Error("bit string not byte-aligned");
+  const out = new Uint8Array(bitStr.length / 8);
+  for (let i = 0; i < out.length; i++) out[i] = parseInt(bitStr.substr(i * 8, 8), 2);
+  return out;
+}
+function indexBits(index) { return index.toString(2).padStart(11, "0"); }
+
+const SUITS = ["♥", "♦", "♣", "♠"];
+const BLUE_RANKS = ["A", "2", "3", "4", "5", "6", "7", "8"];
+const ORANGE_RANKS = ["A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K", "JX", "QX", "KX"];
+
+let entropyWordTarget = 11;
+let phase = "entropy";
+let seedIndices = [];
+let seedWords = [];
+let selected = { blueSuit: null, blueRank: null, orangeSuit: null, orangeRank: null };
+let lastPairInfo = "";
+let revealed = false;
+
+function seedWordCount() { return entropyWordTarget === 11 ? 12 : 24; }
+
+function getCardIndex(deck, suit, rank) {
+  const suitIndex = SUITS.indexOf(suit);
+  const rankIndex = (deck === "blue" ? BLUE_RANKS : ORANGE_RANKS).indexOf(rank);
+  return suitIndex * (deck === "blue" ? 8 : 16) + rankIndex;
+}
+function pairToIndex(blueIdx, orangeIdx) { return blueIdx * 64 + orangeIdx; }
+function indexToPair(wordIndex) {
+  const blueIdx = Math.floor(wordIndex / 64);
+  const orangeIdx = wordIndex % 64;
+  return {
+    blueIdx, orangeIdx,
+    blue: BLUE_RANKS[blueIdx % 8] + SUITS[Math.floor(blueIdx / 8)],
+    orange: ORANGE_RANKS[orangeIdx % 16] + SUITS[Math.floor(orangeIdx / 16)]
+  };
+}
+function currentSelection() {
+  const s = selected;
+  if (!(s.blueSuit && s.blueRank && s.orangeSuit && s.orangeRank)) return null;
+  const blueIdx = getCardIndex("blue", s.blueSuit, s.blueRank);
+  const orangeIdx = getCardIndex("orange", s.orangeSuit, s.orangeRank);
+  const pairIndex = pairToIndex(blueIdx, orangeIdx);
+  return { blueIdx, orangeIdx, pairIndex, word: WORDS[pairIndex] };
+}
+
+function isValidMnemonic(words) {
+  if (words.length !== 12 && words.length !== 24) return false;
+  const idxs = words.map(w => WORDS.indexOf(w));
+  if (idxs.some(i => i < 0)) return false;
+  const bits = idxs.map(indexBits).join("");
+  const entLen = words.length === 12 ? 128 : 256;
+  const csLen = words.length === 12 ? 4 : 8;
+  const hash = sha256(bitsToBytes(bits.slice(0, entLen)));
+  let expect = "";
+  for (let i = 0; i < csLen; i++) expect += String((hash[Math.floor(i / 8)] >> (7 - (i % 8))) & 1);
+  return bits.slice(entLen) === expect;
+}
+
+function computeChecksumWord(pairIndex) {
+  const entWords = seedIndices.slice(0, entropyWordTarget);
+  let bits = entWords.map(indexBits).join("");
+  let extraBits, extra, csLen;
+  if (entropyWordTarget === 11) {
+    extraBits = 7;
+    extra = (pairIndex >> 4) & 0x7f;
+    bits += extra.toString(2).padStart(7, "0");
+    csLen = 4;
+  } else {
+    extraBits = 3;
+    extra = (pairIndex >> 8) & 0x07;
+    bits += extra.toString(2).padStart(3, "0");
+    csLen = 8;
+  }
+  if (bits.length !== (entropyWordTarget === 11 ? 128 : 256)) {
+    throw new Error("entropy bit length " + bits.length);
+  }
+  const hash = sha256(bitsToBytes(bits));
+  let cs = 0;
+  let acc = "";
+  for (let i = 0; i < csLen; i++) {
+    const bit = (hash[Math.floor(i / 8)] >> (7 - (i % 8))) & 1;
+    acc += String(bit);
+    cs = (cs << 1) | bit;
+  }
+  const lastIndex = (extra << csLen) | cs;
+  return {
+    extraBits, extra, csBits: acc, cs, lastIndex,
+    lastWord: WORDS[lastIndex],
+    lookup: indexToPair(lastIndex)
+  };
+}
+
+function resetSelections() {
+  selected = { blueSuit: null, blueRank: null, orangeSuit: null, orangeRank: null };
+  document.querySelectorAll(".deck button").forEach(b => b.classList.remove("on"));
+}
+
+function setLength(n) {
+  if (seedWords.length > 0) return;
+  entropyWordTarget = n;
+  document.getElementById("w12").classList.toggle("on", n === 11);
+  document.getElementById("w24").classList.toggle("on", n === 23);
+  render();
+}
+
+function confirmEntropyPair() {
+  if (phase !== "entropy") return;
+  const sel = currentSelection();
+  if (!sel) return;
+  seedIndices.push(sel.pairIndex);
+  seedWords.push(sel.word);
+  lastPairInfo = "Blue " + selected.blueRank + selected.blueSuit + " (#" + sel.blueIdx +
+    ") + Orange " + selected.orangeRank + selected.orangeSuit + " (#" + sel.orangeIdx +
+    ") → index " + sel.pairIndex + " → " + sel.word;
+  resetSelections();
+  if (seedWords.length === entropyWordTarget) phase = "checksum";
+  render();
+}
+
+function confirmChecksumPair() {
+  if (phase !== "checksum") return;
+  const sel = currentSelection();
+  if (!sel) return;
+  const result = computeChecksumWord(sel.pairIndex);
+  seedIndices.push(result.lastIndex);
+  seedWords.push(result.lastWord);
+  lastPairInfo = "Checksum pair raw index " + sel.pairIndex + " (" + sel.word + "). Kept " +
+    result.extraBits + " extra entropy bits, SHA-256 checksum " + result.csBits +
+    ". Final word index " + result.lastIndex + " = " + result.lastWord +
+    " (pair " + result.lookup.blue + " + " + result.lookup.orange + ").";
+  phase = "done";
+  revealed = false;
+  resetSelections();
+  render();
+}
+
+function redoLastWord() {
+  if (seedWords.length === 0 || phase === "done") return;
+  seedWords.pop();
+  seedIndices.pop();
+  phase = "entropy";
+  lastPairInfo = "Removed last entropy word.";
+  render();
+}
+
+function resetGame() {
+  seedWords = [];
+  seedIndices = [];
+  phase = "entropy";
+  lastPairInfo = "";
+  revealed = false;
+  resetSelections();
+  resetWallet();
+  render();
+}
+
+function render() {
+  const n = seedWords.length;
+  const status = document.getElementById("statusLine");
+  const audit = document.getElementById("pairAudit");
+  const list = document.getElementById("wordList");
+  const box = document.getElementById("checksumBox");
+  const ta = document.getElementById("seedPhraseText");
+  const validEl = document.getElementById("validFlag");
+  const card = document.getElementById("wordCard");
+  const hasPair = !!(selected.blueSuit && selected.blueRank && selected.orangeSuit && selected.orangeRank);
+
+  document.getElementById("w12").disabled = n > 0;
+  document.getElementById("w24").disabled = n > 0;
+  document.getElementById("confirmPair").disabled = !(phase === "entropy" && hasPair && n < entropyWordTarget);
+  document.getElementById("confirmChecksum").disabled = !(phase === "checksum" && hasPair);
+  document.getElementById("redoBtn").disabled = n === 0 || phase === "done";
+  document.getElementById("revealBtn").disabled = phase !== "done";
+  document.getElementById("copyBtn").disabled = phase !== "done" || !revealed;
+
+  document.getElementById("modeNote").textContent =
+    entropyWordTarget === 11
+      ? "12-word phrase. Enter 11 entropy pairs, then one checksum pair. Length is locked after the first pair."
+      : "24-word phrase. Enter 23 entropy pairs, then one checksum pair. Length is locked after the first pair.";
+
+  if (phase === "entropy") {
+    status.textContent = "Entropy words: " + n + " / " + entropyWordTarget +
+      "  ·  finished phrase will have " + seedWordCount() + " words";
+  } else if (phase === "checksum") {
+    status.textContent = "Entropy complete. Draw one more pair for the checksum word.";
+  } else {
+    status.textContent = "Done. " + seedWordCount() + "-word BIP-39 phrase.";
+  }
+  audit.textContent = lastPairInfo;
+
+  if (!n) {
+    list.innerHTML = '<p class="placeholder">No pairs yet.</p>';
+  } else {
+    list.innerHTML = '<div class="wordcard">' + seedWords.map((w, i) =>
+      '<div class="word"><span class="n">' + (i + 1) + '</span><span>' +
+      (phase === "done" && !revealed ? "••••••" : w) +
+      '</span><span class="idx">#' + seedIndices[i] + '</span></div>'
+    ).join("") + '</div>';
+  }
+
+  ta.value = seedWords.join(" ");
+
+  if (phase === "checksum") {
+    box.hidden = false;
+    box.innerHTML = entropyWordTarget === 11
+      ? "<h3>Checksum pair</h3><p>You have 11 × 11 = <b>121 bits</b>. A 12-word seed needs <b>128 bits of entropy + 4 checksum bits</b>.</p><p>Select the 12th physical pair. This page keeps the <b>top 7 bits</b> of that pair index as extra entropy, then sets the last 4 bits from SHA-256(entropy). The last word will usually differ from the raw pair word.</p>"
+      : "<h3>Checksum pair</h3><p>You have 23 × 11 = <b>253 bits</b>. A 24-word seed needs <b>256 bits of entropy + 8 checksum bits</b>.</p><p>Select the 24th pair. This page keeps the <b>top 3 bits</b> of that pair index, then fills 8 checksum bits from SHA-256(entropy).</p>";
+  } else if (phase === "done") {
+    box.hidden = false;
+    const ok = isValidMnemonic(seedWords);
+    box.innerHTML = ok
+      ? "<h3>Checksum pair</h3><p>Checksum matches. This is a valid BIP-39 mnemonic. Write the words on paper, then wipe.</p>"
+      : "<h3>Checksum pair</h3><p>Internal check failed. Reset and start again.</p>";
+    validEl.className = ok ? "okbox" : "warnbox";
+    validEl.textContent = ok ? "VALID BIP-39" : "INTERNAL CHECK FAILED";
+    card.className = "wordcard" + (revealed ? "" : " blurred");
+    const wsheet = document.getElementById("walletSheet");
+    if (wsheet) wsheet.hidden = false;
+    if (revealed && ok) armWallet(seedWords);
+    card.innerHTML = seedWords.map((w, i) =>
+      '<div class="word"><span class="n">' + (i + 1) + '</span><span>' + w + '</span></div>'
+    ).join("");
+  } else {
+    box.hidden = true;
+    validEl.className = "";
+    validEl.textContent = "";
+    card.innerHTML = "";
+  }
+}
+
+function bindDeck(deckEl, deck, kind) {
+  deckEl.querySelectorAll("button").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const key = deck + (kind === "suit" ? "Suit" : "Rank");
+      const value = kind === "suit" ? btn.dataset.suit : btn.dataset.rank;
+      selected[key] = value;
+      deckEl.querySelectorAll("button").forEach(b => b.classList.remove("on"));
+      btn.classList.add("on");
+      render();
+    });
+  });
+}
+
+
+const walletState = { words: null };
+function resetWallet(){
+  walletState.words = null;
+  const sheet = document.getElementById("walletSheet");
+  if (sheet) sheet.hidden = true;
+  const out = document.getElementById("walletOut");
+  if (out) out.hidden = true;
+  const wait = document.getElementById("walletWait");
+  if (wait){ wait.hidden = false; wait.textContent = "Unblur the words first. This section opens after you show the phrase."; }
+  const build = document.getElementById("walletBuild");
+  if (build) build.hidden = true;
+  const qr = document.getElementById("walletQr");
+  if (qr) qr.innerHTML = "";
+  const z = document.getElementById("walletZpub");
+  if (z) z.textContent = "";
+  const a = document.getElementById("walletAddrs");
+  if (a) a.innerHTML = "";
+  const qb = document.getElementById("walletQrBtn");
+  if (qb) qb.hidden = false;
+}
+function armWallet(words){
+  walletState.words = words.slice();
+  const sheet = document.getElementById("walletSheet");
+  if (sheet) sheet.hidden = false;
+  document.getElementById("walletWait").hidden = true;
+  document.getElementById("walletBuild").hidden = false;
+  document.getElementById("walletOut").hidden = true;
+  document.getElementById("walletQr").innerHTML = "";
+  document.getElementById("walletQrBtn").hidden = false;
+}
+function fromHexStr(s){
+  const o = new Uint8Array(s.length/2);
+  for (let i=0;i<o.length;i++) o[i] = parseInt(s.substr(i*2,2),16);
+  return o;
+}
+function bytesToBigInt(b){ let n=0n; for (const x of b) n=(n<<8n)|BigInt(x); return n; }
+function mnemonicToSeedAmulet(mnemonic, pass){
+  const m = mnemonic.normalize("NFKD");
+  const salt = ("mnemonic"+(pass||"")).normalize("NFKD");
+  return pbkdf2Hmac512(enc.encode(m), enc.encode(salt), 2048, 64);
+}
+function ckdPriv(priv, cc, index){
+  const data = new Uint8Array(37);
+  if (index >= 0x80000000){ data[0]=0; data.set(priv, 1); }
+  else { data.set(window.nobleSecp.getPublicKey(priv, true), 0); }
+  new DataView(data.buffer).setUint32(33, index>>>0, false);
+  const I = hmacSha512(cc, data);
+  const IL = I.slice(0,32), IR = I.slice(32);
+  const n = window.nobleSecp.CURVE.n;
+  const il = bytesToBigInt(IL);
+  if (il >= n) throw new Error("IL >= n");
+  const ki = (il + bytesToBigInt(priv)) % n;
+  if (ki === 0n) throw new Error("ki == 0");
+  return { priv: bigToBytes(ki, 32), cc: IR };
+}
+function derivePathSeed(seed, indices){
+  const I0 = hmacSha512(enc.encode("Bitcoin seed"), seed);
+  let priv = I0.slice(0,32), cc = I0.slice(32), parentPub = null, lastIndex = 0;
+  for (const idx of indices){
+    parentPub = window.nobleSecp.getPublicKey(priv.slice(), true);
+    const step = ckdPriv(priv, cc, idx);
+    priv = step.priv; cc = step.cc; lastIndex = idx;
+  }
+  const pub = window.nobleSecp.getPublicKey(priv.slice(), true);
+  return { priv, pub, cc, parentPub, childNumber: lastIndex };
+}
+const B58 = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
+function base58Encode(bytes){
+  let n=0n; for (const x of bytes) n=(n<<8n)|BigInt(x);
+  let s=""; while(n>0n){ s=B58[Number(n%58n)]+s; n/=58n; }
+  for (const x of bytes){ if(x===0) s="1"+s; else break; }
+  return s;
+}
+function base58Check(payload){
+  const h2 = sha256(sha256(payload));
+  const full = new Uint8Array(payload.length + 4);
+  full.set(payload); full.set(h2.slice(0,4), payload.length);
+  return base58Encode(full);
+}
+function serializeExtKey(verHex, depth, parentFp, childNumber, chainCode, key33){
+  const out = new Uint8Array(78);
+  out.set(fromHexStr(verHex), 0);
+  out[4] = depth & 0xff;
+  out.set(parentFp, 5);
+  new DataView(out.buffer).setUint32(9, childNumber>>>0, false);
+  out.set(chainCode, 13);
+  out.set(key33, 45);
+  return base58Check(out);
+}
+const BECH32_CHARSET = "qpzry9x8gf2tvdw0s3jn54khce6mua7l";
+function bech32Polymod(values){
+  const GEN = [0x3b6a57b2,0x26508e6d,0x1ea119fa,0x3d4233dd,0x2a1462b3];
+  let chk = 1;
+  for (const v of values){
+    const top = chk >>> 25;
+    chk = ((chk & 0x1ffffff) << 5) ^ v;
+    for (let i=0;i<5;i++) if ((top>>i)&1) chk ^= GEN[i];
+  }
+  return chk;
+}
+function bech32HrpExpand(hrp){
+  const out = [];
+  for (let i=0;i<hrp.length;i++) out.push(hrp.charCodeAt(i) >> 5);
+  out.push(0);
+  for (let i=0;i<hrp.length;i++) out.push(hrp.charCodeAt(i) & 31);
+  return out;
+}
+function bech32Encode(hrp, data){
+  const values = bech32HrpExpand(hrp).concat(data).concat([0,0,0,0,0,0]);
+  const polymod = bech32Polymod(values) ^ 1;
+  const combined = data.concat([0,0,0,0,0,0].map((_,i)=>(polymod >> (5*(5-i))) & 31));
+  let s = hrp + "1";
+  for (const v of combined) s += BECH32_CHARSET[v];
+  return s;
+}
+function convertBits(data, fromBits, toBits, pad){
+  let acc = 0, bits = 0;
+  const ret = [], maxv = (1 << toBits) - 1;
+  for (const v of data){
+    acc = (acc << fromBits) | v;
+    bits += fromBits;
+    while (bits >= toBits){ bits -= toBits; ret.push((acc >> bits) & maxv); }
+  }
+  if (pad && bits > 0) ret.push((acc << (toBits - bits)) & maxv);
+  return ret;
+}
+function segwitEncode(hrp, witver, witprog){
+  return bech32Encode(hrp, [witver].concat(convertBits(Array.from(witprog), 8, 5, true)));
+}
+function buildBip84(words){
+  const seed = mnemonicToSeedAmulet(words.join(" "), "");
+  const H = 0x80000000;
+  const acct = derivePathSeed(seed, [H+84, H+0, H+0]);
+  const fp = window.ripemd160(sha256(acct.parentPub)).slice(0,4);
+  const zpub = serializeExtKey("04b24746", 3, fp, H+0, acct.cc, acct.pub);
+  const chain0 = ckdPriv(acct.priv, acct.cc, 0);
+  const addrs = [];
+  for (let i=0;i<3;i++){
+    const leaf = ckdPriv(chain0.priv, chain0.cc, i);
+    const pub = window.nobleSecp.getPublicKey(leaf.priv.slice(), true);
+    const h160 = window.ripemd160(sha256(pub));
+    addrs.push({
+      index: i,
+      path: "m/84'/0'/0'/0/" + i,
+      address: segwitEncode("bc", 0, h160)
+    });
+  }
+  return { zpub, addrs };
+}
+function seedQrDigits(words){
+  let d = "";
+  for (const w of words){
+    const idx = WORDS.indexOf(w);
+    if (idx < 0) return null;
+    d += String(idx).padStart(4, "0");
+  }
+  return d;
+}
+function seedQrSvg(qr){
+  const n = qr.getModuleCount(), margin = 4, dim = n + margin * 2;
+  let rects = "";
+  for (let r=0;r<n;r++){
+    for (let c=0;c<n;c++){
+      if (qr.isDark(r,c))
+        rects += '<rect x="'+(c+margin)+'" y="'+(r+margin)+'" width="1" height="1"/>';
+    }
+  }
+  return '<svg class="seedqr-svg" viewBox="0 0 '+dim+' '+dim+'" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges">' +
+         '<rect width="'+dim+'" height="'+dim+'" fill="#ffffff"/>' +
+         '<g fill="#000000">'+rects+'</g></svg>';
+}
+
+const TESTS = [
+  ["SHA-256 empty string", () =>
+    hex(sha256str("")) === "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"],
+  ["SHA-256 \"abc\"", () =>
+    hex(sha256str("abc")) === "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad"],
+  ["wordlist has 2048 entries", () => WORDS.length === 2048],
+  ["wordlist digest matches BIP-39 english.txt", () =>
+    hex(sha256str(WORDS.join("\n") + "\n")) === "2f5eed53a4727b4bf8880d8f3f199efc90e58503646d9ff8eff3a2ed3b24dbda"],
+  ["index 0 is abandon, 3 is about, 2047 is zoo", () =>
+    WORDS[0] === "abandon" && WORDS[3] === "about" && WORDS[2047] === "zoo"],
+  ["pair A♥+A♥ → 0 abandon", () =>
+    pairToIndex(getCardIndex("blue","♥","A"), getCardIndex("orange","♥","A")) === 0],
+  ["pair A♥+4♥ → 3 about", () =>
+    pairToIndex(getCardIndex("blue","♥","A"), getCardIndex("orange","♥","4")) === 3],
+  ["pair 8♠+KX♠ → 2047 zoo", () =>
+    pairToIndex(getCardIndex("blue","♠","8"), getCardIndex("orange","♠","KX")) === 2047],
+  ["BIP-39 vector 128-bit zero", () => {
+    const words = [];
+    for (let i = 0; i < 11; i++) words.push(WORDS[0]);
+    words.push(WORDS[3]);
+    return isValidMnemonic(words) && words.join(" ") ===
+      "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about";
+  }],
+  ["BIP-39 vector 256-bit zero", () => {
+    const words = [];
+    for (let i = 0; i < 23; i++) words.push(WORDS[0]);
+    words.push(WORDS[102]);
+    return isValidMnemonic(words) && words[23] === "art";
+  }],
+  ["12-word checksum from pair 0 on eleven zeros → about", () => {
+    seedIndices = [0,0,0,0,0,0,0,0,0,0,0];
+    entropyWordTarget = 11;
+    const r = computeChecksumWord(0);
+    seedIndices = [];
+    entropyWordTarget = 11;
+    return r.lastWord === "about" && r.lastIndex === 3;
+  }],
+  ["page source does not call Math.random", () => {
+    const src = document.documentElement.innerHTML;
+    return src.split("Math" + ".random(").length === 1;
+  }],
+  ["noble-secp, ripemd160 and qrcode loaded", () =>
+    !!(window.nobleSecp && window.nobleSecp.getPublicKey && window.ripemd160 && typeof qrcode === "function")],
+  ["SeedQR digits for abandon…about", () => {
+    const words = [];
+    for (let i = 0; i < 11; i++) words.push("abandon");
+    words.push("about");
+    return seedQrDigits(words) === "000000000000000000000000000000000000000000000003";
+  }],
+  ["BIP-84 vector abandon…about address 0 + zpub", () => {
+    const words = [];
+    for (let i = 0; i < 11; i++) words.push("abandon");
+    words.push("about");
+    const w = buildBip84(words);
+    return w.addrs[0].address === "bc1qcr8te4kr609gcawutmrza0j4xv80jy8z306fyu"
+      && w.zpub === "zpub6rFR7y4Q2AijBEqTUquhVz398htDFrtymD9xYYfG1m4wAcvPhXNfE3EfH1r1ADqtfSdVCToUG868RvUUkgDKf31mGDtKsAYz2oz2AGutZYs";
+  }]
+];
+
+function runSelfTest() {
+  const lines = [];
+  let pass = 0;
+  for (const [name, fn] of TESTS) {
+    let ok = false, err = "";
+    try { ok = !!fn(); } catch (e) { err = String(e); }
+    if (ok) pass++;
+    lines.push((ok ? "ok  " : "FAIL  ") + name + (err ? "  " + err : ""));
+  }
+  const bar = document.getElementById("stBar");
+  const text = document.getElementById("stText");
+  const detail = document.getElementById("testDetail");
+  if (pass === TESTS.length) {
+    bar.classList.remove("fail");
+    text.textContent = "Self-test " + pass + " / " + TESTS.length + " passed. This copy is usable.";
+  } else {
+    bar.classList.add("fail");
+    text.textContent = "Self-test " + pass + " / " + TESTS.length + " — do not use this copy.";
+  }
+  detail.textContent = lines.join("\n");
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  bindDeck(document.getElementById("blueSuits"), "blue", "suit");
+  bindDeck(document.getElementById("blueRanks"), "blue", "rank");
+  bindDeck(document.getElementById("orangeSuits"), "orange", "suit");
+  bindDeck(document.getElementById("orangeRanks"), "orange", "rank");
+  document.getElementById("w12").onclick = () => setLength(11);
+  document.getElementById("w24").onclick = () => setLength(23);
+  document.getElementById("confirmPair").onclick = confirmEntropyPair;
+  document.getElementById("confirmChecksum").onclick = confirmChecksumPair;
+  document.getElementById("redoBtn").onclick = redoLastWord;
+  document.getElementById("resetBtn").onclick = resetGame;
+  document.getElementById("wipeBtn").onclick = resetGame;
+  document.getElementById("revealBtn").onclick = () => { revealed = true; render(); if (phase === "done") armWallet(seedWords); };
+  document.getElementById("walletBuild").onclick = () => {
+    if (!walletState.words) return;
+    if (!window.nobleSecp || !window.ripemd160){
+      document.getElementById("walletWait").hidden = false;
+      document.getElementById("walletWait").textContent = "The bundled secp256k1 library did not load.";
+      return;
+    }
+    const btn = document.getElementById("walletBuild");
+    btn.disabled = true;
+    btn.textContent = "Deriving…";
+    try {
+      const w = buildBip84(walletState.words);
+      document.getElementById("walletZpub").textContent = w.zpub;
+      const box = document.getElementById("walletAddrs");
+      box.innerHTML = "";
+      w.addrs.forEach(a => {
+        const d = document.createElement("div");
+        d.className = "addr";
+        d.innerHTML = '<span class="i">'+a.index+'</span><span>'+a.address+'</span><span class="p">'+a.path+'</span>';
+        box.appendChild(d);
+      });
+      document.getElementById("walletOut").hidden = false;
+      btn.hidden = true;
+    } catch (e) {
+      document.getElementById("walletWait").hidden = false;
+      document.getElementById("walletWait").textContent = "Derivation failed.";
+    }
+    btn.disabled = false;
+    btn.innerHTML = "Build bech32 addresses, zpub and SeedQR<small>first three receive addresses at m/84'/0'/0'/0/0–2 · no network, no Web Crypto</small>";
+  };
+  document.getElementById("walletQrBtn").onclick = () => {
+    if (!walletState.words || typeof qrcode !== "function") return;
+    const digits = seedQrDigits(walletState.words);
+    if (!digits){ document.getElementById("walletQr").textContent = "A word is not in the BIP-39 list."; return; }
+    const qr = qrcode(0, "M");
+    qr.addData(digits, "Numeric");
+    qr.make();
+    document.getElementById("walletQr").innerHTML = seedQrSvg(qr);
+    document.getElementById("walletQrBtn").hidden = true;
+  };
+  document.getElementById("wipeTabBtn").onclick = () => {
+    if (!confirm("Clear words and derived keys in this tab, then reload the file?")) return;
+    resetGame();
+    resetWallet();
+    try { sessionStorage.clear(); } catch (e) {}
+    try { localStorage.clear(); } catch (e) {}
+    location.reload();
+  };
+  document.getElementById("copyBtn").onclick = () => {
+    const el = document.getElementById("seedPhraseText");
+    el.hidden = false;
+    el.select();
+    try { document.execCommand("copy"); } catch (e) {}
+    el.hidden = true;
+  };
+  const howto = document.getElementById("howto");
+  document.getElementById("howtoOpen").onclick = () => { howto.hidden = false; };
+  document.getElementById("howtoClose").onclick = () => { howto.hidden = true; };
+  howto.addEventListener("click", e => { if (e.target === howto) howto.hidden = true; });
+  document.getElementById("stToggle").onclick = () => {
+    const d = document.getElementById("testDetail");
+    d.hidden = !d.hidden;
+  };
+  runSelfTest();
+  render();
+});
+</script>
+
+</body>
+</html>

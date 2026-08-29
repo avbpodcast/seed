@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Create a seed · v1.0.0</title>
+<style>
+:root{
+  --paper:#F7F5EF; --grid:#E4E1D6; --ink:#191B1F; --ink-soft:#61645F;
+  --bit:#1F4E5F; --stamp:#A8352A;
+  --sans:system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:ui-monospace,"SF Mono","Cascadia Mono",Consolas,Menlo,monospace;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:
+  linear-gradient(var(--grid) 1px, transparent 1px),
+  linear-gradient(90deg, var(--grid) 1px, transparent 1px),
+  var(--paper);
+  background-size:26px 26px; color:var(--ink); font-family:var(--sans)}
+body{min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:36px 16px 64px}
+main{width:min(640px,100%)}
+.sheet{background:var(--paper);border:1.5px solid var(--ink);box-shadow:4px 4px 0 rgba(25,27,31,.11);padding:22px 24px;margin-bottom:14px}
+h1{font-size:1.28rem;letter-spacing:-.01em;margin:0 0 8px;font-weight:700;font-family:var(--mono)}
+.v{font-family:var(--mono);font-size:.8rem;color:var(--ink-soft);font-weight:400;margin-left:8px}
+.sub{margin:0;color:var(--ink-soft);font-size:.9rem;line-height:1.45}
+.pick{display:flex;flex-direction:column;border:1.5px solid var(--ink);margin-top:18px}
+.pick a{
+  display:flex;align-items:flex-start;gap:16px;
+  padding:18px 16px;text-decoration:none;color:var(--ink);
+  background:var(--paper);
+}
+.pick a+a{border-top:1.5px solid var(--ink)}
+.pick a:hover{background:var(--ink);color:var(--paper)}
+.pick a:hover .who,.pick a:hover .does,.pick a:hover .need{color:#D4D1C6}
+.ink{flex:0 0 88px;width:88px;height:72px}
+.ink svg{width:88px;height:72px;display:block}
+.copy{flex:1;min-width:0}
+.pick b{display:block;font-family:var(--mono);font-size:.78rem;letter-spacing:.08em;text-transform:uppercase;margin-bottom:8px}
+.who{display:block;font-size:.95rem;line-height:1.35;margin-bottom:6px}
+.need{display:block;font-family:var(--mono);font-size:.72rem;letter-spacing:.04em;color:var(--ink-soft);margin-bottom:8px}
+.does{display:block;font-size:.82rem;color:var(--ink-soft);line-height:1.4}
+.note{margin-top:16px;font-size:.84rem;color:var(--ink-soft);line-height:1.45}
+.sitefoot{
+  margin-top:4px;padding:10px 4px 0;
+  font-family:var(--mono);font-size:.72rem;letter-spacing:.04em;
+  color:var(--ink-soft);display:flex;flex-wrap:wrap;gap:8px 20px;
+  justify-content:center;text-align:center;width:100%
+}
+.sitefoot a{color:var(--ink-soft);text-decoration:none;border-bottom:1px solid var(--grid)}
+.sitefoot a:hover{color:var(--ink);border-bottom-color:var(--ink)}
+@media (max-width:420px){
+  .ink{flex-basis:72px;width:72px}
+  .ink svg{width:72px;height:59px}
+}
+</style>
+</head>
+<body>
+<main>
+<header class="sheet">
+  <h1>CREATE A SEED <span class="v">v1.0.0 · choose the source</span></h1>
+  <p class="sub">Three offline files. Same stop line after you pick: Basic writes the words; Full also shows the first addresses and a SeedQR. No network. No browser RNG.</p>
+  <div class="pick">
+    <a href="dice-to-seed/dice-to-seed_v1.0.0.html">
+      <span class="ink" aria-hidden="true">
+        <svg viewBox="0 0 88 72" fill="none" stroke="currentColor" stroke-linejoin="miter">
+          <path d="M44 16 L63 27 L44 38 L25 27 Z" stroke-width="1.4"/>
+          <path d="M25 27 L44 38 L44 60 L25 49 Z" stroke-width="1.4"/>
+          <path d="M44 38 L63 27 L63 49 L44 60 Z" stroke-width="1.4"/>
+          <circle cx="44" cy="21.6" r="1.3" fill="currentColor" stroke="none"/>
+          <circle cx="35" cy="27" r="1.3" fill="currentColor" stroke="none"/>
+          <circle cx="44" cy="27" r="1.3" fill="currentColor" stroke="none"/>
+          <circle cx="53" cy="27" r="1.3" fill="currentColor" stroke="none"/>
+          <circle cx="44" cy="32.4" r="1.3" fill="currentColor" stroke="none"/>
+          <circle cx="34.5" cy="43.5" r="1.3" fill="currentColor" stroke="none"/>
+        </svg>
+      </span>
+      <span class="copy">
+        <b>One six-sided die</b>
+        <span class="who">You have a die and time to roll it.</span>
+        <span class="need">Need · one d6 · Dice → Seed v1.0.0</span>
+        <span class="does">Each face is 1–6. Type the rolls. 12 or 24 words. Hardened is the default.</span>
+      </span>
+    </a>
+    <a href="avb-52/avb-52-card-generator_v1.0.0.html">
+      <span class="ink" aria-hidden="true">
+        <svg viewBox="0 0 88 72" fill="none" stroke="currentColor" stroke-linejoin="miter">
+          <path d="M23 19 L51 19 L60 13 L32 13 Z" stroke-width="1.4"/>
+          <path d="M51 19 L60 13 L60 51 L51 57 Z" stroke-width="1.4"/>
+          <path d="M23 19 L51 19 L51 57 L23 57 Z" stroke-width="1.4"/>
+          <path d="M27 23 L47 23 L47 53 L27 53 Z" stroke-width="1"/>
+          <path d="M37 34 L40.4 38.8 L37 43.6 L33.6 38.8 Z" stroke-width="1"/>
+        </svg>
+      </span>
+      <span class="copy">
+        <b>One deck of 52 cards</b>
+        <span class="who">You have one shuffled deck and you deal it in order.</span>
+        <span class="need">Need · one 52-card deck, jokers out · AVB 52 v1.0.0</span>
+        <span class="does">Ranks-only or full cards. 12 or 24 words from that one deal.</span>
+      </span>
+    </a>
+    <a href="seedphrase-poker/seedphrase-poker-v1.0.0.html">
+      <span class="ink" aria-hidden="true">
+        <svg viewBox="0 0 88 72" fill="none" stroke="currentColor" stroke-linejoin="miter">
+          <path d="M8 24 L29 24 L35 20 L14 20 Z" stroke-width="1.35"/>
+          <path d="M29 24 L35 20 L35 48 L29 52 Z" stroke-width="1.35"/>
+          <path d="M8 24 L29 24 L29 52 L8 52 Z" stroke-width="1.35"/>
+          <path d="M11.5 27.5 L25.5 27.5 L25.5 48.5 L11.5 48.5 Z" stroke-width="0.95"/>
+          <path d="M18.5 35.2 L21 38.6 L18.5 42 L16 38.6 Z" stroke-width="0.95"/>
+          <path d="M49 24 L70 24 L76 20 L55 20 Z" stroke-width="1.35"/>
+          <path d="M70 24 L76 20 L76 48 L70 52 Z" stroke-width="1.35"/>
+          <path d="M49 24 L70 24 L70 52 L49 52 Z" stroke-width="1.35"/>
+          <path d="M52.5 27.5 L66.5 27.5 L66.5 48.5 L52.5 48.5 Z" stroke-width="0.95"/>
+          <path d="M59.5 35.2 L62 38.6 L59.5 42 L57 38.6 Z" stroke-width="0.95"/>
+        </svg>
+      </span>
+      <span class="copy">
+        <b>Two decks of 52 cards</b>
+        <span class="who">You have two matching decks and you draw them as pairs.</span>
+        <span class="need">Need · two 52-card decks · SeedPhrasePoker v1.0.0</span>
+        <span class="does">Blue 32 + orange 64. Each pair is one word. Last pair is the checksum.</span>
+      </span>
+    </a>
+  </div>
+  <p class="note">Pick the source you have in the room. Next page is Basic (words only) or Full (words, first addresses, SeedQR). Copy that one HTML file to a machine that stays offline, open it, wait for the green self-test. Write the words by hand. Check them on a second device before any coins move. Twelve or twenty-four words only.</p>
+</header>
+<footer class="sitefoot">
+  <span>v1.0.0</span>
+  <a href="https://allesvoorbitcoin.be/21tools" target="_blank" rel="noopener noreferrer">allesvoorbitcoin.be/21tools</a>
+  <a href="https://github.com/avbpodcast" target="_blank" rel="noopener noreferrer">GitHub</a>
+  <a href="https://coinos.io/pay/Mr21" target="_blank" rel="noopener noreferrer">value for value</a>
+</footer>
+</main>
+</body>
+</html>

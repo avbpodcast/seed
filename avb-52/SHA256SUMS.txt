@@ -1,0 +1,4 @@
+031620fce84e297c61a8d9eac746e1a37453244e2d5fe1099a398a787e9efafc  avb-52-card-generator_v1.0.0-basic.html
+254ebc61524e80a5efa73ce972931974deb75ef88a5d5bd37e3fe7ffee2e74c3  avb-52-card-generator_v1.0.0-full.html
+e5c66b1bd2d8ee9547a4cd8250f18fb44327ef08ca1ea4cca0937c138cb259e3  avb-52-card-generator_v1.0.0.html
+cb6ceac9690aa811bdece8005c44100f7d3d1814e2325375359c2cd3c1d337b7  AVB-52-how-it-works.pdf

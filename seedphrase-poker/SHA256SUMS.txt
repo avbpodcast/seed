@@ -1,0 +1,7 @@
+ba7ffd8eaf6117471c2eb5a8afc02b5c376e018e28f89786616ea820f27c8554  seedphrase-poker-v1.0.0-basic.html
+dec4672d4d54aeb292bb1a111fbbe6056b1f8849c8c991c633ac9162752fd962  seedphrase-poker-v1.0.0-full.html
+2490cf6168923966831f9100113db8f9399f4f0958bb6f7ed3e19a291a6b8e57  seedphrase-poker-v1.0.0.html
+cc3deda4d6e7f33d5d9f89ea539f61128ceed47431211e42043ce86640089f91  seedphrase-poker-guide-EN.pdf
+810826631b0a0ebd261169606de1bfd4c2e1e92965b287fc485074c6a2388b3c  seedphrase-poker-guide-NL.pdf
+faa05f1771e8e90d3d0fad460d6364dac9deb926c1f03c5fe4a4c1f881a183d6  seedphrase-poker-pairs-0based.pdf
+a65fee418d333aaeb25e0b6e7f33bb54232f24413a0fad4501fb35e1f61b062f  seedphrase-poker-pairs-1based.pdf

@@ -1,0 +1,1011 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dice → Seed · v1.0.0 Basic</title>
+<style>
+:root{
+  --paper:#F7F5EF; --grid:#E4E1D6; --ink:#191B1F; --ink-soft:#61645F;
+  --bit:#1F4E5F; --bit-soft:#E3EDF0; --stamp:#A8352A; --stamp-soft:#F6E8E5;
+  --amber:#C56A16; --amber-soft:#F6E7D4;
+  --ok:#2C6E49; --ok-soft:#E4F0E8;
+  --mono:ui-monospace,'SF Mono','Cascadia Mono',Consolas,Menlo,monospace;
+  --sans:system-ui,-apple-system,'Segoe UI',sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{background:var(--paper)}
+body{
+  font-family:var(--sans);color:var(--ink);line-height:1.55;
+  background:linear-gradient(var(--grid) 1px,transparent 1px),
+             linear-gradient(90deg,var(--grid) 1px,transparent 1px);
+  background-size:26px 26px;background-color:var(--paper);
+  min-height:100vh;padding:28px 16px 72px;
+}
+main{max-width:760px;margin:0 auto}
+.sheet{background:var(--paper);border:1.5px solid var(--ink);box-shadow:4px 4px 0 rgba(25,27,31,.11);padding:22px;margin-bottom:20px}
+.sheet.collapsed{padding:16px 22px}
+header.sheet{border-left:5px solid var(--bit)}
+h1{font-family:var(--mono);font-size:1.3rem;letter-spacing:-.01em;font-weight:700}
+h1 .arrow{color:var(--bit)}
+h1 .v{color:var(--ink-soft);font-weight:400;font-size:.8rem}
+.sub{color:var(--ink-soft);font-size:.9rem;margin-top:6px;max-width:50ch}
+h2{font-family:var(--mono);font-size:.76rem;letter-spacing:.11em;text-transform:uppercase;color:var(--ink-soft);margin-bottom:13px}
+h2 .step{display:inline-block;border:1.5px solid var(--ink);width:21px;height:21px;line-height:19px;text-align:center;color:var(--ink);margin-right:8px;font-size:.72rem}
+.selftest{font-family:var(--mono);font-size:.78rem;border:1.5px solid var(--ok);background:var(--ok-soft);color:var(--ok);padding:9px 13px;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.selftest.fail{border-color:var(--stamp);background:var(--stamp-soft);color:var(--stamp)}
+.selftest button{font-family:inherit;font-size:inherit;color:inherit;background:none;border:1px solid currentColor;padding:2px 8px;cursor:pointer}
+#testDetail{font-family:var(--mono);font-size:.75rem;color:var(--ink-soft);margin-top:11px;white-space:pre-wrap}
+.toggle{display:flex;margin-bottom:10px;font-family:var(--mono);font-size:.82rem}
+.toggle button{flex:1;padding:9px 6px;border:1.5px solid var(--ink);background:var(--paper);cursor:pointer;font-family:inherit;font-size:inherit;color:var(--ink);line-height:1.3}
+.toggle button+button{border-left:none}
+.toggle button.on{background:var(--ink);color:var(--paper)}
+.toggle button:focus-visible{outline:2px solid var(--bit);outline-offset:2px}
+.modenote{background:var(--bit-soft);border-left:3px solid var(--bit);padding:11px 14px;font-size:.87rem;margin:14px 0 16px}
+.modenote code{font-family:var(--mono);background:rgba(31,78,95,.13);padding:1px 5px}
+.beats{display:flex;margin-top:14px;padding:0;list-style:none;font-family:var(--mono);font-size:.7rem;line-height:1.35}
+.beats li{flex:1;border:1.5px solid var(--ink);padding:8px 7px;background:var(--paper);color:var(--ink-soft)}
+.beats li+li{border-left:none}
+.beats li.on{background:var(--ink);color:var(--paper)}
+.beats li.done{background:var(--bit-soft);color:var(--bit);border-color:var(--bit)}
+.deallabel{font-family:var(--mono);font-size:.84rem;margin:0 0 8px;color:var(--ink)}
+.notation{margin-top:12px;font-size:.86rem;border:1px dashed #C9C6BA;padding:11px 14px;background:#fff}
+.notation .row{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.notation .keys{font-family:var(--mono);display:flex;flex-wrap:wrap;gap:6px;margin:8px 0}
+.notation .keys b{border:1.5px solid var(--ink);padding:2px 8px;font-weight:600;background:var(--paper)}
+.helpbtn{font-family:var(--mono);font-size:.75rem;border:1.5px solid var(--ink);background:var(--paper);color:var(--ink);padding:5px 10px;cursor:pointer}
+.tip{position:relative;display:inline-block}
+.tip > button,.tip > .mark{cursor:help}
+.tip .bubble{
+  display:none;position:absolute;left:0;top:calc(100% + 8px);z-index:8;
+  width:min(340px,70vw);padding:10px 12px;border:1.5px solid var(--ink);
+  background:var(--paper);box-shadow:4px 4px 0 rgba(25,27,31,.12);
+  font-family:var(--sans);font-size:.82rem;line-height:1.45;color:var(--ink);
+  text-transform:none;letter-spacing:0;font-weight:400;
+}
+.tip:hover .bubble,.tip:focus-within .bubble{display:block}
+.mark{font-family:var(--mono);font-size:.72rem;border:1.5px solid var(--ink);
+  background:var(--amber-soft);color:var(--ink);padding:1px 6px;margin-left:6px}
+
+.readas{font-family:var(--mono);font-size:.78rem;color:var(--ink-soft);margin-top:8px;min-height:1.3em}
+.readas b{color:var(--ink);font-weight:600}
+.overlay{position:fixed;inset:0;background:rgba(25,27,31,.45);z-index:20;display:flex;align-items:flex-start;justify-content:center;padding:28px 16px;overflow:auto}
+.overlay[hidden]{display:none}
+.sheetpop{background:var(--paper);border:1.5px solid var(--ink);box-shadow:6px 6px 0 rgba(25,27,31,.16);max-width:560px;width:100%;padding:20px}
+.sheetpop h3{font-family:var(--mono);font-size:.95rem;margin-bottom:10px}
+.cheats th,.cheats td{font-family:var(--mono);font-size:.78rem;text-align:left;padding:5px 8px;border-bottom:1px solid var(--grid)}
+.cheats th{color:var(--ink-soft);font-weight:600;text-transform:uppercase;letter-spacing:.06em;font-size:.68rem}
+.stamp{font-family:var(--mono);font-size:.78rem;letter-spacing:.04em;text-transform:uppercase;color:var(--ink-soft);margin-top:12px}
+.wordcard.blurred .word span:not(.n){filter:blur(8px);user-select:none}
+.wordcard.blurred{user-select:none}
+.bitwrap.blurred{filter:blur(6px);user-select:none}
+textarea{width:100%;min-height:96px;font-family:var(--mono);font-size:1.02rem;letter-spacing:.16em;line-height:1.85;
+  border:1.5px solid var(--ink);background:#fff;padding:13px;resize:vertical;color:var(--ink)}
+textarea:focus{outline:2px solid var(--bit);outline-offset:1px}
+textarea:disabled{background:#F2F0EA;color:var(--ink-soft)}
+input[type=text]{width:100%;font-family:var(--mono);font-size:.9rem;border:1.5px solid var(--ink);background:#fff;padding:10px;color:var(--ink)}
+.rowbtn{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+.rowbtn button{font-family:var(--mono);font-size:.78rem;border:1.5px solid var(--ink);background:var(--paper);color:var(--ink);padding:6px 12px;cursor:pointer}
+.rowbtn button:focus-visible{outline:2px solid var(--bit);outline-offset:2px}
+.bigbtn{display:block;width:100%;margin-top:15px;font-family:var(--mono);font-size:.86rem;letter-spacing:.03em;
+  border:1.5px solid var(--bit);background:var(--bit);color:var(--paper);padding:13px;cursor:pointer;line-height:1.45}
+.bigbtn:disabled{border-color:#C9C6BA;background:#EDEBE4;color:var(--ink-soft);cursor:default}
+.bigbtn small{display:block;font-size:.74rem;opacity:.85;margin-top:3px}
+.track{display:grid;grid-template-columns:repeat(35,1fr);gap:2px;margin-top:12px}
+.track.short{grid-template-columns:repeat(27,1fr)}
+.track i{aspect-ratio:1;border:1px solid #C9C6BA;background:transparent}
+.track i.set{background:var(--bit);border-color:var(--bit)}
+.meter{display:flex;justify-content:space-between;font-family:var(--mono);font-size:.8rem;color:var(--ink-soft);margin-top:9px;flex-wrap:wrap;gap:8px}
+.meter b{color:var(--ink)}
+.meter .done{color:var(--ok);font-weight:700}
+.tally{font-family:var(--mono);font-size:.78rem;color:var(--ink-soft);margin-top:8px}
+.tally b{color:var(--ink)}
+.bias{font-family:var(--mono);font-size:.78rem;padding:9px 13px;margin-top:8px;border:1.5px solid var(--amber);background:var(--amber-soft);color:var(--ink)}
+.bias.red{border-color:var(--stamp);background:var(--stamp-soft);color:var(--stamp)}
+
+.msg{font-family:var(--mono);font-size:.8rem;padding:9px 13px;margin-top:12px;border:1.5px solid var(--stamp);background:var(--stamp-soft);color:var(--stamp)}
+.msg.note{border-color:var(--bit);background:var(--bit-soft);color:var(--bit)}
+.bitgrid{display:grid;grid-template-columns:repeat(32,1fr);gap:2px}
+.bitgrid i{aspect-ratio:1;border:1px solid #C9C6BA;background:transparent}
+.bitgrid i.one{background:var(--bit);border-color:var(--bit)}
+.bitgrid i.cs{border-color:var(--amber)}
+.bitgrid i.cs.one{background:var(--amber)}
+.legend{display:flex;gap:16px;font-family:var(--mono);font-size:.73rem;color:var(--ink-soft);margin-top:11px;flex-wrap:wrap}
+.legend i{width:10px;height:10px;border:1px solid #C9C6BA;display:inline-block;margin-right:5px;vertical-align:-1px}
+.legend i.one{background:var(--bit);border-color:var(--bit)}
+.legend i.cs{background:var(--amber);border-color:var(--amber)}
+.wordcard{display:grid;grid-template-columns:repeat(auto-fill,minmax(155px,1fr));gap:8px}
+.word{border:1px solid var(--grid);border-bottom:1.5px solid var(--ink);padding:7px 10px;font-family:var(--mono);font-size:.94rem;display:flex;gap:9px;background:#fff}
+.word .n{color:var(--ink-soft);font-size:.72rem;width:2ch;text-align:right;flex-shrink:0;padding-top:3px}
+.placeholder{color:var(--ink-soft);font-size:.88rem;font-style:italic}
+.receipt{font-family:var(--mono);font-size:.76rem;color:var(--ink-soft);margin-top:15px;word-break:break-all;border-top:1px dashed #C9C6BA;padding-top:12px}
+.receipt div{margin-bottom:4px}
+.receipt b{color:var(--ink);font-weight:600}
+.receipt .csbits{color:var(--amber)}
+pre{font-family:var(--mono);font-size:.72rem;background:#fff;border:1px solid var(--grid);border-left:3px solid var(--bit);padding:11px;overflow-x:auto;color:var(--ink);line-height:1.5}
+.stampbox{border:1.5px solid var(--stamp);background:var(--stamp-soft);color:var(--stamp);
+  font-family:var(--mono);font-size:.78rem;letter-spacing:.03em;padding:10px 13px;margin-bottom:14px;text-transform:uppercase}
+.notes{font-size:.86rem;color:var(--ink-soft)}
+.notes p{margin-bottom:9px}
+.notes p:last-child{margin-bottom:0}
+.notes strong{color:var(--ink)}
+.walletbox .mono{font-family:var(--mono);font-size:.78rem;word-break:break-all;background:#fff;border:1px solid var(--grid);padding:10px 12px}
+.walletbox .addr{font-family:var(--mono);font-size:.82rem;border-bottom:1px solid var(--grid);padding:7px 0;display:flex;gap:10px}
+.walletbox .addr .i{color:var(--ink-soft);width:3ch}
+.seedqr-svg{width:220px;height:220px;background:#fff;border:1.5px solid var(--ink)}
+.sq-warn{border:1.5px solid var(--amber);background:var(--amber-soft);color:var(--amber);padding:10px 12px;font-size:.84rem;margin:10px 0}
+@media (max-width:600px){
+  .bitgrid{grid-template-columns:repeat(16,1fr)}
+  .track{grid-template-columns:repeat(21,1fr)}
+  .track.short{grid-template-columns:repeat(18,1fr)}
+  .sheet{padding:17px}
+  .toggle{font-size:.75rem}
+}
+
+
+.back{
+  display:inline-block;font-family:var(--mono);font-size:.72rem;letter-spacing:.04em;
+  color:var(--ink-soft);text-decoration:none;border-bottom:1px solid var(--grid);
+  margin:0 0 10px
+}
+.back:hover{color:var(--ink);border-bottom-color:var(--ink)}
+.sitefoot{
+  margin-top:18px;padding:10px 4px 0;
+  font-family:var(--mono);font-size:.72rem;letter-spacing:.04em;
+  color:var(--ink-soft);display:flex;flex-wrap:wrap;gap:8px 20px;
+  justify-content:center;text-align:center;width:100%
+}
+.sitefoot a{color:var(--ink-soft);text-decoration:none;border-bottom:1px solid var(--grid)}
+.sitefoot a:hover{color:var(--ink);border-bottom-color:var(--ink)}
+</style>
+</head>
+<body>
+<main>
+
+<header class="sheet">
+  <a class="back" href="dice-to-seed_v1.0.0.html">← choose a file</a>
+  
+  <div>
+    <h1>DICE <span class="arrow">→</span> SEED <span class="v">v1.0.0 · Basic</span></h1>
+    <p class="sub">Ritual only. Rolls become a 12- or 24-word BIP39 phrase. This file stops at the words — no addresses, no QR, no private keys in memory. Hardened SHA-256 by default. Transparent base-6 is still available.</p>
+  </div>
+</header>
+
+<section class="sheet">
+  <div class="stampbox" id="colemanBar">Ian Coleman: paste the <b>1–6</b> faces. Auto-detect off. Type Dice [1–6]. Length 12 or 24 words — not Raw. Do not paste zeros.</div>
+  <div class="selftest" id="stBar">
+    <span id="stText">running self-test…</span>
+    <button id="stToggle" type="button">details</button>
+  </div>
+  <div id="testDetail" hidden></div>
+</section>
+
+<section class="sheet" id="setup">
+  <h2><span class="step">1</span>Set the length before you pick up the die</h2>
+  <div class="toggle" role="group" aria-label="Phrase length">
+    <button id="w12" class="on" type="button">12 words<br><span id="w12n">64 rolls</span></button>
+    <button id="w24" type="button">24 words<br><span id="w24n">128 rolls</span></button>
+  </div>
+  <div class="toggle" role="group" aria-label="Extraction mode">
+    <button id="mTrans" type="button">Transparent<br>base-6, exact</button>
+    <button id="mHard" class="on" type="button">Hardened<br>SHA-256 extractor</button>
+  </div>
+  <div class="rowbtn" style="margin-top:8px">
+    <span class="tip">
+      <button class="helpbtn" type="button" aria-describedby="tipTrans">About transparent</button>
+      <span class="bubble" id="tipTrans" role="tooltip">Transparent treats the faces as one base-6 number. A fair die then gives every 12- or 24-word phrase the same chance. You can replay the math with the Python at the bottom. A few sequences are rejected; start over if that happens. This will not match Ian Coleman.</span>
+    </span>
+    <span class="tip">
+      <button class="helpbtn" type="button" aria-describedby="tipHard">About hardened</button>
+      <span class="bubble" id="tipHard" role="tooltip">Hardened writes 6 as 0 after you confirm, then SHA-256s that line. Use this if the die may be uneven, or if you want to check the words in Ian Coleman. You need more rolls (64 or 128). You cannot point at one face and say which bit it became. This is the default.</span>
+    </span>
+  </div>
+  <div class="modenote" id="modeNote"></div>
+  <ol class="beats" id="beats"></ol>
+  <div class="notation">
+    <div class="row">
+      <span>Faces <b style="font-family:var(--mono)">1–6</b> only. Type a six as <b>6</b>. We leave it as 6 until you confirm the set.</span>
+      <span style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="helpbtn" id="helpOpen" type="button">What do I type?</button>
+        <span class="tip">
+          <button class="helpbtn" type="button" aria-describedby="compatBubble">Why 6 becomes 0</button>
+          <span class="bubble" id="compatBubble" role="tooltip">A six-sided die has faces 1–6. After you confirm, this box rewrites every 6 as 0 for the hash. Paste Ian Coleman the original 1–6 faces, not the zeros. His Dice filter deletes 0. Turn auto-detect off, type Dice [1–6], length 12 or 24 — not Raw.</span>
+        </span>
+      </span>
+    </div>
+    <div class="keys"><b>1</b><b>2</b><b>3</b><b>4</b><b>5</b><b>6</b></div>
+  </div>
+</section>
+
+<div class="overlay" id="helpOverlay" hidden>
+  <div class="sheetpop" role="dialog" aria-modal="true" aria-labelledby="helpTitle">
+    <div class="rowbtn" style="justify-content:space-between;align-items:center;margin:0 0 12px">
+      <h3 id="helpTitle">What do I type?</h3>
+      <button class="helpbtn" id="helpClose" type="button">Close</button>
+    </div>
+    <table class="cheats">
+      <thead><tr><th>Face</th><th>Type while rolling</th><th>Value after you confirm</th></tr></thead>
+      <tbody>
+        <tr><td>1</td><td><code>1</code></td><td>1</td></tr>
+        <tr><td>2</td><td><code>2</code></td><td>2</td></tr>
+        <tr><td>3</td><td><code>3</code></td><td>3</td></tr>
+        <tr><td>4</td><td><code>4</code></td><td>4</td></tr>
+        <tr><td>5</td><td><code>5</code></td><td>5</td></tr>
+        <tr><td>6</td><td><code>6</code></td><td>0</td></tr>
+      </tbody>
+    </table>
+    <p class="sub" style="margin-top:12px">Anything else is ignored. Type what you see on the die (1–6). If you paste a cleaned line, 0 is read as 6 and the box shows sixes again. Transparent then reads one base-6 integer. Hardened hashes that cleaned line — the same line Ian Coleman hashes for Dice [1–6] when auto-detect is off and the word count is 12 or 24, not “raw”. Groups of five are only for reading.</p>
+  </div>
+</div>
+
+<section class="sheet" id="rollSheet">
+  <h2><span class="step">2</span>Roll and enter</h2>
+  <p class="deallabel" id="dealLabel">Type 53 faces — 12 words · transparent</p>
+  <p class="sub" style="margin:0 0 12px">One fair six-sided die. Enter each face as you roll it. Do not skip, repeat-to-fix, or tidy a lopsided tally.</p>
+  <textarea id="rolls" spellcheck="false" autocomplete="off" inputmode="numeric"
+    aria-label="Dice rolls" placeholder="3 6 1 4 2 …"></textarea>
+  <div class="readas" id="readas"></div>
+  <div class="rowbtn">
+    <button id="undoBtn" type="button">Undo last</button>
+    <button id="clearBtn" type="button">Clear rolls</button>
+  </div>
+  <div class="meter">
+    <span>rolls <b id="count">0</b> of <b id="need">53</b> <span id="doneMark" class="done" hidden>complete</span></span>
+    <span id="modeTag"></span>
+  </div>
+  <div class="track" id="track" aria-hidden="true"></div>
+  <div class="tally" id="tally"></div>
+  <div class="bias" id="biasBox" hidden></div>
+  <div class="msg" id="msg" hidden></div>
+  <button class="bigbtn" id="finishBtn" type="button" disabled>Enter more faces</button>
+  <div class="stamp" id="r1stamp" hidden>Rolls confirmed — this box is closed</div>
+</section>
+
+<section class="sheet collapsed" id="phraseSheet">
+  <p class="placeholder" id="phraseWait">Words stay hidden until you confirm the roll count.</p>
+  <div id="phraseBody" hidden>
+    <h2><span class="step" id="phraseStep">3</span>Recovery phrase</h2>
+    <div id="cardZone"></div>
+    <button class="bigbtn" id="revealBtn" type="button" hidden>Unblur the words</button>
+    <div class="receipt" id="receipt" hidden></div>
+  </div>
+</section>
+
+<section class="sheet">
+  <h2><span class="step" id="stepRepro">5</span>Reproduce this yourself</h2>
+  <p class="sub" style="margin:0 0 11px">The extractor in plain Python. Face 6 stays 6 in the box. Both modes write 6 as 0 only when hashing or reducing — the box does not change.</p>
+  <pre id="refCode"></pre>
+</section>
+
+
+
+<section class="sheet notes">
+  <div class="stampbox">Write the words on paper by hand. Never photograph, paste, or retype them on a connected device.</div>
+  <p><strong>Use this file air-gapped.</strong> Save it, move it to an offline machine, open it, generate, close the browser. It makes no network requests, loads nothing external, and writes nothing to disk or browser storage.</p>
+  <p><strong>The length is fixed before the first roll.</strong> Hardened is the default. Changing 12 / 24 or transparent / hardened after you have started clears the box. Eighteen-word phrases are not offered.</p>
+  <p><strong>Transparent mode is exactly uniform, not approximately.</strong> The rolls form one base-6 integer. The tool rejects the top slice of the range that would not divide evenly into 2<sup>n</sup>, then reduces. About 1 sequence in 7,300 (12 words) or 86,000 (24 words). If it fires, discard every roll and start over. Do not add, remove, or edit a face to escape it.</p>
+  <p><strong>Hardened mode assumes the die is imperfect.</strong> After you confirm the set, face 6 is written as 0 and that cleaned line is SHA-256’d. That matches Ian Coleman’s Dice [1-6] when auto-detect is off, the type is Dice [1-6], and the word count is 12 or 24 (not “raw”). Paste him the original 1–6 faces, not the zeros: Dice [1–6] deletes 0. Auto-detect is on by default and will treat a 0–5 line as hex. 64 or 128 rolls leave spare entropy so a skewed die can still feed the hash. You give up tracing bits back to individual faces.</p>
+  <p><strong>The face tally is information, not an instruction.</strong> Uneven counts are normal. Re-rolling to even them biases the seed. A red strip under the tally means the set looks typed or from a dead die — clear it. An amber strip is a warning only; the phrase is still offered. Test a suspect die in a separate session, then generate with a die you trust.</p>
+  <p><strong>Verify before funding.</strong> Restore the phrase on a hardware wallet or a second independent BIP39 implementation and confirm identical addresses. Two implementations agreeing is the safety net; this file agreeing with itself is not.</p>
+  <p><strong>This is the Basic file. It never derives keys. The Full file adds the first three bech32 addresses, the account zpub, and a SeedQR after the phrase exists.</strong></p>
+</section>
+
+<section class="sheet notes">
+  <h2>Wipe this tab</h2>
+  <p>This file never writes localStorage, cookies, or a server. The browser can still keep the last form and the words in RAM, and Firefox session restore can bring a tab back. Tails forgets the disk at shutdown. This button clears what the page can reach, then reloads.</p>
+  <button class="bigbtn" id="wipeBtn" type="button" style="background:var(--stamp);border-color:var(--stamp)">Wipe rolls, words and keys in this tab<small>then reload — close the tab after if you are done</small></button>
+</section>
+
+<footer class="sitefoot">
+  <span>v1.0.0</span>
+  <a href="https://allesvoorbitcoin.be/21tools" target="_blank" rel="noopener noreferrer">allesvoorbitcoin.be/21tools</a>
+  <a href="https://github.com/avbpodcast" target="_blank" rel="noopener noreferrer">GitHub</a>
+  <a href="https://coinos.io/pay/Mr21" target="_blank" rel="noopener noreferrer">value for value</a>
+</footer>
+</main>
+
+<script>
+"use strict";
+
+/* ============================================================
+   BIP39 English wordlist
+   ============================================================ */
+const WORDS = ["abandon","ability","able","about","above","absent","absorb","abstract","absurd","abuse","access","accident","account","accuse","achieve","acid","acoustic","acquire","across","act","action","actor","actress","actual","adapt","add","addict","address","adjust","admit","adult","advance","advice","aerobic","affair","afford","afraid","again","age","agent","agree","ahead","aim","air","airport","aisle","alarm","album","alcohol","alert","alien","all","alley","allow","almost","alone","alpha","already","also","alter","always","amateur","amazing","among","amount","amused","analyst","anchor","ancient","anger","angle","angry","animal","ankle","announce","annual","another","answer","antenna","antique","anxiety","any","apart","apology","appear","apple","approve","april","arch","arctic","area","arena","argue","arm","armed","armor","army","around","arrange","arrest","arrive","arrow","art","artefact","artist","artwork","ask","aspect","assault","asset","assist","assume","asthma","athlete","atom","attack","attend","attitude","attract","auction","audit","august","aunt","author","auto","autumn","average","avocado","avoid","awake","aware","away","awesome","awful","awkward","axis","baby","bachelor","bacon","badge","bag","balance","balcony","ball","bamboo","banana","banner","bar","barely","bargain","barrel","base","basic","basket","battle","beach","bean","beauty","because","become","beef","before","begin","behave","behind","believe","below","belt","bench","benefit","best","betray","better","between","beyond","bicycle","bid","bike","bind","biology","bird","birth","bitter","black","blade","blame","blanket","blast","bleak","bless","blind","blood","blossom","blouse","blue","blur","blush","board","boat","body","boil","bomb","bone","bonus","book","boost","border","boring","borrow","boss","bottom","bounce","box","boy","bracket","brain","brand","brass","brave","bread","breeze","brick","bridge","brief","bright","bring","brisk","broccoli","broken","bronze","broom","brother","brown","brush","bubble","buddy","budget","buffalo","build","bulb","bulk","bullet","bundle","bunker","burden","burger","burst","bus","business","busy","butter","buyer","buzz","cabbage","cabin","cable","cactus","cage","cake","call","calm","camera","camp","can","canal","cancel","candy","cannon","canoe","canvas","canyon","capable","capital","captain","car","carbon","card","cargo","carpet","carry","cart","case","cash","casino","castle","casual","cat","catalog","catch","category","cattle","caught","cause","caution","cave","ceiling","celery","cement","census","century","cereal","certain","chair","chalk","champion","change","chaos","chapter","charge","chase","chat","cheap","check","cheese","chef","cherry","chest","chicken","chief","child","chimney","choice","choose","chronic","chuckle","chunk","churn","cigar","cinnamon","circle","citizen","city","civil","claim","clap","clarify","claw","clay","clean","clerk","clever","click","client","cliff","climb","clinic","clip","clock","clog","close","cloth","cloud","clown","club","clump","cluster","clutch","coach","coast","coconut","code","coffee","coil","coin","collect","color","column","combine","come","comfort","comic","common","company","concert","conduct","confirm","congress","connect","consider","control","convince","cook","cool","copper","copy","coral","core","corn","correct","cost","cotton","couch","country","couple","course","cousin","cover","coyote","crack","cradle","craft","cram","crane","crash","crater","crawl","crazy","cream","credit","creek","crew","cricket","crime","crisp","critic","crop","cross","crouch","crowd","crucial","cruel","cruise","crumble","crunch","crush","cry","crystal","cube","culture","cup","cupboard","curious","current","curtain","curve","cushion","custom","cute","cycle","dad","damage","damp","dance","danger","daring","dash","daughter","dawn","day","deal","debate","debris","decade","december","decide","decline","decorate","decrease","deer","defense","define","defy","degree","delay","deliver","demand","demise","denial","dentist","deny","depart","depend","deposit","depth","deputy","derive","describe","desert","design","desk","despair","destroy","detail","detect","develop","device","devote","diagram","dial","diamond","diary","dice","diesel","diet","differ","digital","dignity","dilemma","dinner","dinosaur","direct","dirt","disagree","discover","disease","dish","dismiss","disorder","display","distance","divert","divide","divorce","dizzy","doctor","document","dog","doll","dolphin","domain","donate","donkey","donor","door","dose","double","dove","draft","dragon","drama","drastic","draw","dream","dress","drift","drill","drink","drip","drive","drop","drum","dry","duck","dumb","dune","during","dust","dutch","duty","dwarf","dynamic","eager","eagle","early","earn","earth","easily","east","easy","echo","ecology","economy","edge","edit","educate","effort","egg","eight","either","elbow","elder","electric","elegant","element","elephant","elevator","elite","else","embark","embody","embrace","emerge","emotion","employ","empower","empty","enable","enact","end","endless","endorse","enemy","energy","enforce","engage","engine","enhance","enjoy","enlist","enough","enrich","enroll","ensure","enter","entire","entry","envelope","episode","equal","equip","era","erase","erode","erosion","error","erupt","escape","essay","essence","estate","eternal","ethics","evidence","evil","evoke","evolve","exact","example","excess","exchange","excite","exclude","excuse","execute","exercise","exhaust","exhibit","exile","exist","exit","exotic","expand","expect","expire","explain","expose","express","extend","extra","eye","eyebrow","fabric","face","faculty","fade","faint","faith","fall","false","fame","family","famous","fan","fancy","fantasy","farm","fashion","fat","fatal","father","fatigue","fault","favorite","feature","february","federal","fee","feed","feel","female","fence","festival","fetch","fever","few","fiber","fiction","field","figure","file","film","filter","final","find","fine","finger","finish","fire","firm","first","fiscal","fish","fit","fitness","fix","flag","flame","flash","flat","flavor","flee","flight","flip","float","flock","floor","flower","fluid","flush","fly","foam","focus","fog","foil","fold","follow","food","foot","force","forest","forget","fork","fortune","forum","forward","fossil","foster","found","fox","fragile","frame","frequent","fresh","friend","fringe","frog","front","frost","frown","frozen","fruit","fuel","fun","funny","furnace","fury","future","gadget","gain","galaxy","gallery","game","gap","garage","garbage","garden","garlic","garment","gas","gasp","gate","gather","gauge","gaze","general","genius","genre","gentle","genuine","gesture","ghost","giant","gift","giggle","ginger","giraffe","girl","give","glad","glance","glare","glass","glide","glimpse","globe","gloom","glory","glove","glow","glue","goat","goddess","gold","good","goose","gorilla","gospel","gossip","govern","gown","grab","grace","grain","grant","grape","grass","gravity","great","green","grid","grief","grit","grocery","group","grow","grunt","guard","guess","guide","guilt","guitar","gun","gym","habit","hair","half","hammer","hamster","hand","happy","harbor","hard","harsh","harvest","hat","have","hawk","hazard","head","health","heart","heavy","hedgehog","height","hello","helmet","help","hen","hero","hidden","high","hill","hint","hip","hire","history","hobby","hockey","hold","hole","holiday","hollow","home","honey","hood","hope","horn","horror","horse","hospital","host","hotel","hour","hover","hub","huge","human","humble","humor","hundred","hungry","hunt","hurdle","hurry","hurt","husband","hybrid","ice","icon","idea","identify","idle","ignore","ill","illegal","illness","image","imitate","immense","immune","impact","impose","improve","impulse","inch","include","income","increase","index","indicate","indoor","industry","infant","inflict","inform","inhale","inherit","initial","inject","injury","inmate","inner","innocent","input","inquiry","insane","insect","inside","inspire","install","intact","interest","into","invest","invite","involve","iron","island","isolate","issue","item","ivory","jacket","jaguar","jar","jazz","jealous","jeans","jelly","jewel","job","join","joke","journey","joy","judge","juice","jump","jungle","junior","junk","just","kangaroo","keen","keep","ketchup","key","kick","kid","kidney","kind","kingdom","kiss","kit","kitchen","kite","kitten","kiwi","knee","knife","knock","know","lab","label","labor","ladder","lady","lake","lamp","language","laptop","large","later","latin","laugh","laundry","lava","law","lawn","lawsuit","layer","lazy","leader","leaf","learn","leave","lecture","left","leg","legal","legend","leisure","lemon","lend","length","lens","leopard","lesson","letter","level","liar","liberty","library","license","life","lift","light","like","limb","limit","link","lion","liquid","list","little","live","lizard","load","loan","lobster","local","lock","logic","lonely","long","loop","lottery","loud","lounge","love","loyal","lucky","luggage","lumber","lunar","lunch","luxury","lyrics","machine","mad","magic","magnet","maid","mail","main","major","make","mammal","man","manage","mandate","mango","mansion","manual","maple","marble","march","margin","marine","market","marriage","mask","mass","master","match","material","math","matrix","matter","maximum","maze","meadow","mean","measure","meat","mechanic","medal","media","melody","melt","member","memory","mention","menu","mercy","merge","merit","merry","mesh","message","metal","method","middle","midnight","milk","million","mimic","mind","minimum","minor","minute","miracle","mirror","misery","miss","mistake","mix","mixed","mixture","mobile","model","modify","mom","moment","monitor","monkey","monster","month","moon","moral","more","morning","mosquito","mother","motion","motor","mountain","mouse","move","movie","much","muffin","mule","multiply","muscle","museum","mushroom","music","must","mutual","myself","mystery","myth","naive","name","napkin","narrow","nasty","nation","nature","near","neck","need","negative","neglect","neither","nephew","nerve","nest","net","network","neutral","never","news","next","nice","night","noble","noise","nominee","noodle","normal","north","nose","notable","note","nothing","notice","novel","now","nuclear","number","nurse","nut","oak","obey","object","oblige","obscure","observe","obtain","obvious","occur","ocean","october","odor","off","offer","office","often","oil","okay","old","olive","olympic","omit","once","one","onion","online","only","open","opera","opinion","oppose","option","orange","orbit","orchard","order","ordinary","organ","orient","original","orphan","ostrich","other","outdoor","outer","output","outside","oval","oven","over","own","owner","oxygen","oyster","ozone","pact","paddle","page","pair","palace","palm","panda","panel","panic","panther","paper","parade","parent","park","parrot","party","pass","patch","path","patient","patrol","pattern","pause","pave","payment","peace","peanut","pear","peasant","pelican","pen","penalty","pencil","people","pepper","perfect","permit","person","pet","phone","photo","phrase","physical","piano","picnic","picture","piece","pig","pigeon","pill","pilot","pink","pioneer","pipe","pistol","pitch","pizza","place","planet","plastic","plate","play","please","pledge","pluck","plug","plunge","poem","poet","point","polar","pole","police","pond","pony","pool","popular","portion","position","possible","post","potato","pottery","poverty","powder","power","practice","praise","predict","prefer","prepare","present","pretty","prevent","price","pride","primary","print","priority","prison","private","prize","problem","process","produce","profit","program","project","promote","proof","property","prosper","protect","proud","provide","public","pudding","pull","pulp","pulse","pumpkin","punch","pupil","puppy","purchase","purity","purpose","purse","push","put","puzzle","pyramid","quality","quantum","quarter","question","quick","quit","quiz","quote","rabbit","raccoon","race","rack","radar","radio","rail","rain","raise","rally","ramp","ranch","random","range","rapid","rare","rate","rather","raven","raw","razor","ready","real","reason","rebel","rebuild","recall","receive","recipe","record","recycle","reduce","reflect","reform","refuse","region","regret","regular","reject","relax","release","relief","rely","remain","remember","remind","remove","render","renew","rent","reopen","repair","repeat","replace","report","require","rescue","resemble","resist","resource","response","result","retire","retreat","return","reunion","reveal","review","reward","rhythm","rib","ribbon","rice","rich","ride","ridge","rifle","right","rigid","ring","riot","ripple","risk","ritual","rival","river","road","roast","robot","robust","rocket","romance","roof","rookie","room","rose","rotate","rough","round","route","royal","rubber","rude","rug","rule","run","runway","rural","sad","saddle","sadness","safe","sail","salad","salmon","salon","salt","salute","same","sample","sand","satisfy","satoshi","sauce","sausage","save","say","scale","scan","scare","scatter","scene","scheme","school","science","scissors","scorpion","scout","scrap","screen","script","scrub","sea","search","season","seat","second","secret","section","security","seed","seek","segment","select","sell","seminar","senior","sense","sentence","series","service","session","settle","setup","seven","shadow","shaft","shallow","share","shed","shell","sheriff","shield","shift","shine","ship","shiver","shock","shoe","shoot","shop","short","shoulder","shove","shrimp","shrug","shuffle","shy","sibling","sick","side","siege","sight","sign","silent","silk","silly","silver","similar","simple","since","sing","siren","sister","situate","six","size","skate","sketch","ski","skill","skin","skirt","skull","slab","slam","sleep","slender","slice","slide","slight","slim","slogan","slot","slow","slush","small","smart","smile","smoke","smooth","snack","snake","snap","sniff","snow","soap","soccer","social","sock","soda","soft","solar","soldier","solid","solution","solve","someone","song","soon","sorry","sort","soul","sound","soup","source","south","space","spare","spatial","spawn","speak","special","speed","spell","spend","sphere","spice","spider","spike","spin","spirit","split","spoil","sponsor","spoon","sport","spot","spray","spread","spring","spy","square","squeeze","squirrel","stable","stadium","staff","stage","stairs","stamp","stand","start","state","stay","steak","steel","stem","step","stereo","stick","still","sting","stock","stomach","stone","stool","story","stove","strategy","street","strike","strong","struggle","student","stuff","stumble","style","subject","submit","subway","success","such","sudden","suffer","sugar","suggest","suit","summer","sun","sunny","sunset","super","supply","supreme","sure","surface","surge","surprise","surround","survey","suspect","sustain","swallow","swamp","swap","swarm","swear","sweet","swift","swim","swing","switch","sword","symbol","symptom","syrup","system","table","tackle","tag","tail","talent","talk","tank","tape","target","task","taste","tattoo","taxi","teach","team","tell","ten","tenant","tennis","tent","term","test","text","thank","that","theme","then","theory","there","they","thing","this","thought","three","thrive","throw","thumb","thunder","ticket","tide","tiger","tilt","timber","time","tiny","tip","tired","tissue","title","toast","tobacco","today","toddler","toe","together","toilet","token","tomato","tomorrow","tone","tongue","tonight","tool","tooth","top","topic","topple","torch","tornado","tortoise","toss","total","tourist","toward","tower","town","toy","track","trade","traffic","tragic","train","transfer","trap","trash","travel","tray","treat","tree","trend","trial","tribe","trick","trigger","trim","trip","trophy","trouble","truck","true","truly","trumpet","trust","truth","try","tube","tuition","tumble","tuna","tunnel","turkey","turn","turtle","twelve","twenty","twice","twin","twist","two","type","typical","ugly","umbrella","unable","unaware","uncle","uncover","under","undo","unfair","unfold","unhappy","uniform","unique","unit","universe","unknown","unlock","until","unusual","unveil","update","upgrade","uphold","upon","upper","upset","urban","urge","usage","use","used","useful","useless","usual","utility","vacant","vacuum","vague","valid","valley","valve","van","vanish","vapor","various","vast","vault","vehicle","velvet","vendor","venture","venue","verb","verify","version","very","vessel","veteran","viable","vibrant","vicious","victory","video","view","village","vintage","violin","virtual","virus","visa","visit","visual","vital","vivid","vocal","voice","void","volcano","volume","vote","voyage","wage","wagon","wait","walk","wall","walnut","want","warfare","warm","warrior","wash","wasp","waste","water","wave","way","wealth","weapon","wear","weasel","weather","web","wedding","weekend","weird","welcome","west","wet","whale","what","wheat","wheel","when","where","whip","whisper","wide","width","wife","wild","will","win","window","wine","wing","wink","winner","winter","wire","wisdom","wise","wish","witness","wolf","woman","wonder","wood","wool","word","work","world","worry","worth","wrap","wreck","wrestle","wrist","write","wrong","yard","year","yellow","you","young","youth","zebra","zero","zone","zoo"];
+
+/* ============================================================
+   SHA-256 — pure JS, no Web Crypto
+   ============================================================ */
+const K256 = [
+0x428a2f98,0x71374491,0xb5c0fbcf,0xe9b5dba5,0x3956c25b,0x59f111f1,0x923f82a4,0xab1c5ed5,
+0xd807aa98,0x12835b01,0x243185be,0x550c7dc3,0x72be5d74,0x80deb1fe,0x9bdc06a7,0xc19bf174,
+0xe49b69c1,0xefbe4786,0x0fc19dc6,0x240ca1cc,0x2de92c6f,0x4a7484aa,0x5cb0a9dc,0x76f988da,
+0x983e5152,0xa831c66d,0xb00327c8,0xbf597fc7,0xc6e00bf3,0xd5a79147,0x06ca6351,0x14292967,
+0x27b70a85,0x2e1b2138,0x4d2c6dfc,0x53380d13,0x650a7354,0x766a0abb,0x81c2c92e,0x92722c85,
+0xa2bfe8a1,0xa81a664b,0xc24b8b70,0xc76c51a3,0xd192e819,0xd6990624,0xf40e3585,0x106aa070,
+0x19a4c116,0x1e376c08,0x2748774c,0x34b0bcb5,0x391c0cb3,0x4ed8aa4a,0x5b9cca4f,0x682e6ff3,
+0x748f82ee,0x78a5636f,0x84c87814,0x8cc70208,0x90befffa,0xa4506ceb,0xbef9a3f7,0xc67178f2];
+
+function rotr(x,n){ return ((x>>>n)|(x<<(32-n)))>>>0; }
+
+function sha256(bytes){
+  const len = bytes.length;
+  const padded = (((len + 9) + 63) >> 6) << 6;
+  const buf = new Uint8Array(padded);
+  buf.set(bytes);
+  buf[len] = 0x80;
+  const dv = new DataView(buf.buffer);
+  dv.setUint32(padded - 8, Math.floor(len / 536870912));
+  dv.setUint32(padded - 4, (len * 8) >>> 0);
+  let h0=0x6a09e667,h1=0xbb67ae85,h2=0x3c6ef372,h3=0xa54ff53a,
+      h4=0x510e527f,h5=0x9b05688c,h6=0x1f83d9ab,h7=0x5be0cd19;
+  const w = new Uint32Array(64);
+  for (let off=0; off<padded; off+=64){
+    for (let i=0;i<16;i++) w[i] = dv.getUint32(off + i*4);
+    for (let i=16;i<64;i++){
+      const a1=w[i-15], b1=w[i-2];
+      const s0 = (rotr(a1,7) ^ rotr(a1,18) ^ (a1>>>3))>>>0;
+      const s1 = (rotr(b1,17) ^ rotr(b1,19) ^ (b1>>>10))>>>0;
+      w[i] = (w[i-16] + s0 + w[i-7] + s1) >>> 0;
+    }
+    let a=h0,b=h1,c=h2,d=h3,e=h4,f=h5,g=h6,h=h7;
+    for (let i=0;i<64;i++){
+      const S1 = (rotr(e,6) ^ rotr(e,11) ^ rotr(e,25))>>>0;
+      const ch = ((e & f) ^ (~e & g))>>>0;
+      const t1 = (h + S1 + ch + K256[i] + w[i])>>>0;
+      const S0 = (rotr(a,2) ^ rotr(a,13) ^ rotr(a,22))>>>0;
+      const mj = ((a & b) ^ (a & c) ^ (b & c))>>>0;
+      const t2 = (S0 + mj)>>>0;
+      h=g; g=f; f=e; e=(d+t1)>>>0; d=c; c=b; b=a; a=(t1+t2)>>>0;
+    }
+    h0=(h0+a)>>>0; h1=(h1+b)>>>0; h2=(h2+c)>>>0; h3=(h3+d)>>>0;
+    h4=(h4+e)>>>0; h5=(h5+f)>>>0; h6=(h6+g)>>>0; h7=(h7+h)>>>0;
+  }
+  const out = new Uint8Array(32);
+  const odv = new DataView(out.buffer);
+  [h0,h1,h2,h3,h4,h5,h6,h7].forEach((v,i)=>odv.setUint32(i*4, v));
+  return out;
+}
+
+const enc = new TextEncoder();
+function sha256str(s){ return sha256(enc.encode(s)); }
+function hex(bytes){ return [...bytes].map(b=>b.toString(16).padStart(2,'0')).join(''); }
+function hexToBytes(h){
+  const out = new Uint8Array(h.length/2);
+  for (let i=0;i<out.length;i++) out[i] = parseInt(h.substr(i*2,2),16);
+  return out;
+}
+function bigToBytes(v, len){
+  const out = new Uint8Array(len);
+  for (let i=len-1; i>=0; i--){ out[i] = Number(v & 255n); v >>= 8n; }
+  return out;
+}
+
+
+
+/* ============================================================
+   BIP39
+   ============================================================ */
+function entropyToMnemonic(bytes){
+  let bits = '';
+  for (const b of bytes) bits += b.toString(2).padStart(8,'0');
+  let csAll = '';
+  for (const b of sha256(bytes)) csAll += b.toString(2).padStart(8,'0');
+  const cs = csAll.slice(0, bits.length / 32);
+  const full = bits + cs;
+  const words = [];
+  for (let i=0; i<full.length; i+=11) words.push(WORDS[parseInt(full.slice(i,i+11), 2)]);
+  return { words, bits, cs };
+}
+
+/* ============================================================
+   Extractors
+   ============================================================ */
+function extractExact(digits, entBits){
+  let n = 0n;
+  for (const ch of digits) n = n * 6n + (ch === '6' ? 0n : BigInt(ch));
+  const span = 6n ** BigInt(digits.length);
+  const two  = 1n << BigInt(entBits);
+  const cut  = (span / two) * two;
+  if (n >= cut) return { rejected: true };
+  return { rejected: false, bytes: bigToBytes(n % two, entBits / 8) };
+}
+
+
+function longestRun(digits){
+  let best = 0, cur = 0, prev = '';
+  for (const ch of digits){
+    if (ch === prev) cur++;
+    else { cur = 1; prev = ch; }
+    if (cur > best) best = cur;
+  }
+  return best;
+}
+function chi2Faces(counts, n){
+  if (n < 30) return null;
+  const e = n / 6;
+  let s = 0;
+  for (const c of counts) s += (c - e) * (c - e) / e;
+  return s;
+}
+function isPeriod(digits, p){
+  if (digits.length < p * 2) return false;
+  const block = digits.slice(0, p);
+  if (new Set(block).size < 2) return false;
+  for (let i = 0; i < digits.length; i++){
+    if (digits[i] !== block[i % p]) return false;
+  }
+  return true;
+}
+function scanBias(digits){
+  const n = digits.length;
+  if (n < 8) return { level: 'ok', text: '' };
+  const counts = [0,0,0,0,0,0];
+  for (const c of digits) counts[+c - 1]++;
+  const maxFace = Math.max.apply(null, counts);
+  const distinct = counts.filter(c => c > 0).length;
+  const run = longestRun(digits);
+  const chi = chi2Faces(counts, n);
+  const flags = [];
+  let level = 'ok';
+  function bump(lv, msg){
+    flags.push(msg);
+    if (lv === 'red') level = 'red';
+    else if (lv === 'amber' && level !== 'red') level = 'amber';
+  }
+  if (run >= 12 || maxFace >= Math.ceil(n / 2)) bump('red', 'one face dominates (run ' + run + ', top count ' + maxFace + ')');
+  else if (run >= 8) bump('amber', 'a run of ' + run + ' identical faces');
+  if (n >= 30 && distinct < 4) bump('red', 'only ' + distinct + ' of 6 faces appeared');
+  else if (n >= 16 && distinct < 3) bump('red', 'only ' + distinct + ' of 6 faces appeared');
+  if (chi !== null && chi > 15.09) bump(chi > 20.5 ? 'red' : 'amber', 'face counts look loaded (chi-square ' + chi.toFixed(1) + ')');
+  if (isPeriod(digits, 2)) bump('red', 'the sequence is a two-face loop');
+  if (isPeriod(digits, 3) || isPeriod(digits, 6)) bump('red', 'the sequence is a short repeating block');
+  if (/^(123456)+$/.test(digits) || /^(654321)+$/.test(digits) ||
+      /^(123456)+1?2?3?4?5?$/.test(digits) || /^(654321)+6?5?4?3?2?$/.test(digits))
+    bump('red', 'the sequence is just counting around the die');
+  if (!flags.length) return { level: 'ok', text: '' };
+  const head = level === 'red'
+    ? 'These rolls look typed or from a bad die. Do not fund a wallet from this set. Clear and use another die. Do not edit faces to silence this.'
+    : 'These rolls look uneven. Uneven is often normal — do not re-roll to flatten the tally. If you typed a pattern, or the die always lands the same way, clear and start over.';
+  return { level: level, text: head + ' ' + flags.join('; ') + '.' };
+}
+
+function extractHashed(digits, entBits){
+  return { rejected: false, bytes: sha256str(digits.replace(/6/g, '0')).slice(0, entBits / 8) };
+}
+
+function parseRolls(raw){
+  const digits = [];
+  const dropped = [];
+  let zeros = 0;
+  for (const ch of raw){
+    if (ch === ' ' || ch === '\n' || ch === '\t' || ch === ',' || ch === '-') continue;
+    if (ch >= '1' && ch <= '6') digits.push(ch);
+    else if (ch === '0'){ digits.push('6'); zeros++; }
+    else dropped.push(ch);
+  }
+  return { digits: digits.join(''), dropped, zeros };
+}
+
+/* ============================================================
+   Self-test
+   ============================================================ */
+const REJ53 = '55554534626612546662234326224521262362126435653252666'; // n == cut for 53 rolls / 128 bits
+
+const TESTS = [
+  ['SHA-256 empty string', () =>
+    hex(sha256str('')) === 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855'],
+  ['SHA-256 "abc"', () =>
+    hex(sha256str('abc')) === 'ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad'],
+  ['SHA-256 long input', () =>
+    hex(sha256str('a'.repeat(1000000))) === 'cdc76e5c9914fb9281a1c7e284d73e67f1809a48a497200e046d39ccc7112cd0'],
+  ['wordlist has 2048 entries', () => WORDS.length === 2048],
+  ['wordlist digest matches BIP39 english.txt', () =>
+    hex(sha256str(WORDS.join('\n') + '\n')) === '2f5eed53a4727b4bf8880d8f3f199efc90e58503646d9ff8eff3a2ed3b24dbda'],
+  ['BIP39 vector 128-bit zero', () =>
+    entropyToMnemonic(new Uint8Array(16)).words.join(' ') ===
+    'abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about'],
+  ['BIP39 vector 256-bit zero', () =>
+    entropyToMnemonic(new Uint8Array(32)).words.join(' ') === ('abandon '.repeat(23) + 'art')],
+  ['BIP39 vector 0x7f x16', () =>
+    entropyToMnemonic(new Uint8Array(16).fill(0x7f)).words.join(' ') ===
+    'legal winner thank year wave sausage worth useful legal winner thank yellow'],
+  ['BIP39 vector f585c11a…', () =>
+    entropyToMnemonic(hexToBytes('f585c11aec520db57dd353c69554b21a89b20fb0650966fa0a9d6f74fd989d8f')).words.join(' ') ===
+    'void come effort suffer camp survey warrior heavy shoot primary clutch crush open amazing screen patrol group space point ten exist slush involve unfold'],
+  ['BIP39 vector 9e885d95…', () =>
+    entropyToMnemonic(hexToBytes('9e885d952ad362caeb4efe34a8e91bd2')).words.join(' ') ===
+    'ozone drill grab fiber curtain grace pudding thank cruise elder eight picnic'],
+  ['parser keeps only faces 1–6', () =>
+    parseRolls('3a 7 6\n1,2-0 5').digits === '361265'],
+  ['cleaned zeros paste back as sixes', () =>
+    parseRolls('1203420120001344').digits === '1263426126661344'],
+  ['exact extractor, 105 rolls', () => {
+    const r = extractExact(('612345'.repeat(20)).slice(0,105), 256);
+    return !r.rejected && hex(r.bytes) === 'cfe0a8523bac67e2669c9235e0c782b4d64ef7eb887dc3965197ccdc406b1ba0';
+  }],
+  ['exact extractor, 53 rolls', () => {
+    const r = extractExact(('654321'.repeat(10)).slice(0,53), 128);
+    return !r.rejected && hex(r.bytes) === '17eb8ca5475369cfd91132d67d7d5a3c';
+  }],
+  ['exact extractor maps 6 to 0', () => {
+    const a = extractExact('6'.repeat(105), 256);
+    return !a.rejected && hex(a.bytes) === '0'.repeat(64);
+  }],
+  ['exact extractor rejects the uneven top slice', () => {
+    const r = extractExact(REJ53, 128);
+    return r.rejected === true;
+  }],
+  ['hashed extractor, 128 rolls', () => {
+    const r = extractHashed(('123456'.repeat(22)).slice(0,128), 256);
+    return hex(r.bytes) === '835f4a58d6cf4d1676db621807370f7670f70fbbcd4717b7cfe8bc1052be1446';
+  }],
+  ['hashed extractor, 64 rolls', () => {
+    const r = extractHashed(('123456'.repeat(11)).slice(0,64), 128);
+    return hex(r.bytes) === '6d9cf78f6db02ec1197e4b942bee9635';
+  }],
+  ['hardened matches Ian Coleman dice hash (6→0 first)', () => {
+    const r = extractHashed('56134166445464541215465456566566141111154254432142515142544322243544652424545411336614544455165542534444241145261516542232555561', 256);
+    return hex(r.bytes) === 'cc47df68cc39e93228875a7a061466bf177d7344f2e1a3ced0d69e2de80b7731';
+  }],
+  ['roll counts are fixed per mode', () =>
+    ROLLS.exact[256] === 105 && ROLLS.exact[128] === 53 &&
+    ROLLS.hashed[256] === 128 && ROLLS.hashed[128] === 64],
+  ['bias detector: thirty fours is red', () => scanBias('4'.repeat(30)).level === 'red'],
+  ['bias detector: counting 123456 loop is red', () => scanBias('123456'.repeat(10)).level === 'red'],
+  ['bias detector: mixed 64-roll set is not red', () => {
+    const d = '6152436152435612341652346152436152435612341652346152436152435612';
+    return d.length === 64 && scanBias(d).level !== 'red';
+  }],
+];
+
+function runSelfTest(){
+  const lines = [];
+  let failed = 0;
+  for (const [name, fn] of TESTS){
+    let ok = false;
+    try { ok = fn() === true; } catch (e) { ok = false; }
+    if (!ok) failed++;
+    lines.push((ok ? 'pass  ' : 'FAIL  ') + name);
+  }
+  const bar = $('stBar'), txt = $('stText');
+  if (failed === 0){
+    txt.textContent = 'self-test passed · ' + TESTS.length + ' checks · SHA-256, wordlist, BIP39 vectors, extractors';
+  } else {
+    bar.classList.add('fail');
+    txt.textContent = 'SELF-TEST FAILED · ' + failed + ' of ' + TESTS.length + ' checks · do not use this file';
+    $('testDetail').hidden = false;
+  }
+  $('testDetail').textContent = lines.join('\n');
+  return failed === 0;
+}
+
+/* ============================================================
+   UI
+   ============================================================ */
+const $ = id => document.getElementById(id);
+const state = { entBits: 128, mode: 'hashed', finished: false, reveal: 0 };
+const VARIANT = 'basic'; // basic | full
+
+const ROLLS = { exact: { 256: 105, 128: 53 }, hashed: { 256: 128, 128: 64 } };
+function target(){ return ROLLS[state.mode][state.entBits]; }
+
+const REF = `# Dice → Seed — transparent mode reads rolls as one base-6 integer
+# Face 6 stays 6 while you type. After confirm, both modes write 6 as 0.
+# Hardened hashes that cleaned string.
+
+def extract_exact(digits, k):
+    n = 0
+    for ch in digits:
+        n = n * 6 + (0 if ch == '6' else int(ch))
+    span, two = 6 ** len(digits), 1 << k
+    cut = (span // two) * two
+    if n >= cut:
+        return None          # reject; roll a fresh set. Do not edit a face.
+    return '%0*x' % (k // 4, n % two)
+
+# 12 words, transparent: extract_exact(digits, 128)   # 53 rolls
+# 24 words, transparent: extract_exact(digits, 256)   # 105 rolls
+# hardened: hashlib.sha256(digits.replace("6","0").encode()).hexdigest()[:k//4]`;
+
+const NOTES = {
+  exact: () => 'Your rolls are one base-6 integer, reduced to ' + state.entBits +
+    ' bits by rejection sampling — exactly uniform. Yields <code>' +
+    (state.entBits / target()).toFixed(2) + '</code> bits per roll against a ceiling of 2.585. Assumes a fair die.',
+  hashed: () => 'You keep typing 6. After you confirm, every 6 is written as 0 and that line is hashed with SHA-256, then truncated to ' + state.entBits +
+    ' bits. Same cleaned line Ian Coleman hashes for Dice [1-6] (word count 12 or 24, not raw). Over-rolled so a biased die still leaves full-strength output. ' +
+    'You can no longer trace entropy back to a single face.'
+};
+
+$('stToggle').onclick = () => { const d = $('testDetail'); d.hidden = !d.hidden; };
+$('helpClose').onclick = closeHelp;
+$('helpOverlay').addEventListener('click', e => { if (e.target === $('helpOverlay')) closeHelp(); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeHelp(); });
+$('helpOpen').onclick = openHelp;
+function openHelp(){ $('helpOverlay').hidden = false; }
+function closeHelp(){ $('helpOverlay').hidden = true; }
+
+$('mTrans').onclick = () => setMode('exact');
+$('mHard').onclick  = () => setMode('hashed');
+$('w24').onclick    = () => setLen(256);
+$('w12').onclick    = () => setLen(128);
+$('undoBtn').onclick = () => {
+  const d = digitsNow();
+  if (!d.length || state.finished) return;
+  writeDigits(d.slice(0, -1));
+  update();
+};
+$('clearBtn').onclick = () => {
+  if (state.finished && !confirm('This clears the finished set and hides the words. Continue?')) return;
+  resetRolls();
+  update();
+  $('rolls').focus();
+};
+$('finishBtn').onclick = () => {
+  if ($('finishBtn').disabled) return;
+  state.finished = true;
+  state.reveal = 0;
+  writeDigits(digitsNow());
+  lockRolls(true);
+  update();
+};
+$('revealBtn').onclick = () => {
+  state.reveal = 1;
+  update();
+};
+
+function rollsInProgress(){ return digitsNow().length > 0 || state.finished; }
+function confirmWipe(){
+  return !rollsInProgress() ||
+    confirm('This clears the rolls you have already entered. Length and mode must be fixed before the first roll. Continue?');
+}
+function setMode(m){
+  if (m === state.mode) return;
+  if (!confirmWipe()) return;
+  state.mode = m;
+  $('mTrans').classList.toggle('on', m === 'exact');
+  $('mHard').classList.toggle('on', m === 'hashed');
+  resetRolls();
+  rebuild();
+}
+function setLen(bits){
+  if (bits === state.entBits) return;
+  if (!confirmWipe()) return;
+  state.entBits = bits;
+  $('w24').classList.toggle('on', bits === 256);
+  $('w12').classList.toggle('on', bits === 128);
+  resetRolls();
+  rebuild();
+}
+function resetRolls(){
+  state.finished = false;
+  state.reveal = 0;
+  $('rolls').value = '';
+  lockRolls(false);
+  if (typeof resetWallet === 'function') resetWallet();
+}
+function lockRolls(on){
+  $('rolls').disabled = on;
+  $('undoBtn').disabled = on;
+  $('r1stamp').hidden = !on;
+}
+
+function rebuild(){
+  const n = target();
+  const words = state.entBits === 256 ? 24 : 12;
+  $('need').textContent = n;
+  $('w12n').textContent = ROLLS[state.mode][128] + ' rolls';
+  $('w24n').textContent = ROLLS[state.mode][256] + ' rolls';
+  $('modeNote').innerHTML = NOTES[state.mode]();
+  $('modeTag').textContent = (state.mode === 'exact' ? 'transparent' : 'hardened') + ' · ' + words + 'w';
+  $('dealLabel').textContent = 'Type ' + n + ' faces — ' + words + ' words · ' +
+    (state.mode === 'exact' ? 'transparent' : 'hardened');
+  $('phraseStep').textContent = '3';
+  $('stepCheck').textContent = '4';
+  $('stepRepro').textContent = '5';
+  if ($('stepWallet')) $('stepWallet').textContent = '6';
+  const t = $('track');
+  t.innerHTML = '';
+  t.classList.toggle('short', n <= 64);
+  for (let i=0;i<n;i++) t.appendChild(document.createElement('i'));
+  paintBeats();
+  update();
+}
+
+function paintBeats(){
+  const el = $('beats');
+  const n = target();
+  el.hidden = false;
+  el.innerHTML =
+    '<li class="' + (!state.finished ? 'on' : 'done') + '">1. Roll ' + n + '</li>' +
+    '<li class="' + (state.finished && state.reveal === 0 ? 'on' : (state.reveal ? 'done' : '')) + '">2. Confirm</li>' +
+    '<li class="' + (state.reveal ? 'on' : '') + '">3. Write the words</li>';
+}
+
+function digitsNow(){ return parseRolls($('rolls').value).digits; }
+
+function writeDigits(d){
+  const pretty = d.replace(/(.{5})/g, '$1 ').trimEnd();
+  $('rolls').value = pretty;
+}
+function writeCleaned(d){
+  const cleaned = d.replace(/6/g, '0');
+  $('rolls').value = cleaned.replace(/(.{5})/g, '$1 ').trimEnd();
+}
+
+$('rolls').addEventListener('input', () => {
+  if (state.finished) return;
+  const el = $('rolls');
+  const before = el.value.slice(0, el.selectionStart);
+  const digitsBefore = parseRolls(before).digits.length;
+  let clean = parseRolls(el.value).digits;
+  const n = target();
+  if (clean.length > n) clean = clean.slice(0, n);
+  writeDigits(clean);
+  const pretty = el.value;
+  let pos = 0, seen = 0;
+  while (pos < pretty.length && seen < Math.min(digitsBefore, clean.length)){
+    if (pretty[pos] !== ' ') seen++;
+    pos++;
+  }
+  el.setSelectionRange(pos, pos);
+  update();
+});
+
+function update(){
+  const parsed = parseRolls($('rolls').value);
+  const digits = parsed.digits;
+  const n = target();
+  $('count').textContent = digits.length;
+  const shown = digits.replace(/(.{5})/g, '$1 ').trimEnd();
+  const shown0 = digits.replace(/6/g,'0').replace(/(.{5})/g, '$1 ').trimEnd();
+  $('readas').innerHTML = digits.length
+    ? (state.finished
+        ? 'confirmed — box now shows 6 as 0: <b>' + shown0 + '</b>'
+        : 'as typed <b>' + shown + '</b> · 6 stays 6 until you confirm')
+    : 'Type faces 1 to 6. A six stays 6 in this box until you confirm the set.';
+
+  const cells = $('track').children;
+  for (let i=0;i<cells.length;i++) cells[i].className = i < digits.length ? 'set' : '';
+
+  const counts = [0,0,0,0,0,0];
+  for (const c of digits) counts[+c - 1]++;
+  $('tally').innerHTML = 'faces &nbsp;' +
+    counts.map((c,i)=>'<b>'+(i+1)+'</b>:'+c).join(' &nbsp; ') +
+    ' &nbsp;·&nbsp; uneven counts are normal — never re-roll to even them out';
+
+  const bias = scanBias(digits);
+  const box = $('biasBox');
+  if (!bias.text){ box.hidden = true; box.textContent = ''; box.className = 'bias'; }
+  else {
+    box.hidden = false;
+    box.className = 'bias' + (bias.level === 'red' ? ' red' : '');
+    box.textContent = bias.text;
+  }
+
+  $('doneMark').hidden = digits.length !== n;
+  paintBeats();
+
+  let message = null;
+  let ready = false;
+  let rejected = false;
+  let bytes = null;
+
+  if (parsed.zeros){
+    message = 'Read ' + parsed.zeros + ' zero' + (parsed.zeros===1?'':'s') +
+      ' as sixes (cleaned line). The box shows 6 again.';
+  }
+  if (parsed.dropped.length){
+    message = (message ? message + ' ' : '') + 'Ignored “' + parsed.dropped.slice(0,8).join('') +
+      (parsed.dropped.length > 8 ? '…' : '') + '”. Only faces 1–6 count.';
+  }
+
+  if (digits.length === n){
+    const r = state.mode === 'exact'
+      ? extractExact(digits, state.entBits)
+      : extractHashed(digits, state.entBits);
+    if (r.rejected){
+      rejected = true;
+      message = 'Rejected — this sequence falls in the uneven top slice of the base-6 range ' +
+        '(about 1 in ' + (state.entBits === 256 ? '86,000' : '7,300') + '). ' +
+        'Clear the box and roll a fresh set. Do not edit a face to get past this.';
+    } else {
+      ready = true;
+      bytes = r.bytes;
+    }
+  }
+
+  $('msg').hidden = !message;
+  if (message){
+    $('msg').textContent = message;
+    $('msg').className = 'msg' + (parsed.dropped.length && !rejected ? ' note' : '');
+  }
+
+  const finish = $('finishBtn');
+  if (!state.finished){
+    finish.hidden = false;
+    finish.disabled = !ready;
+    finish.innerHTML = ready
+      ? 'Rolls complete — show the phrase<small>words stay blurred until you unblur them</small>'
+      : rejected
+        ? 'Rejected — clear and roll again'
+        : 'Enter ' + (n - digits.length) + ' more face' + (n - digits.length === 1 ? '' : 's');
+  } else {
+    finish.hidden = true;
+  }
+
+  if (!state.finished || !bytes){
+    hidePhrase(rejected
+      ? 'Rejected set. Clear and start over.'
+      : 'Words stay hidden until you confirm the roll count.');
+    return;
+  }
+  render(bytes, digits);
+}
+
+function hidePhrase(msg){
+  $('phraseSheet').classList.add('collapsed');
+  $('phraseBody').hidden = true;
+  $('phraseWait').hidden = false;
+  $('phraseWait').textContent = msg;
+  $('revealBtn').hidden = true;
+  $('receipt').hidden = true;
+  if (typeof resetWallet === 'function') resetWallet();
+}
+
+function render(bytes, digits){
+  $('phraseSheet').classList.remove('collapsed');
+  $('phraseWait').hidden = true;
+  $('phraseBody').hidden = false;
+  const m = entropyToMnemonic(bytes);
+  $('cardZone').innerHTML = '';
+  const card = wordCard(m.words);
+  const grid = bitGrid(m.bits, m.cs);
+  if (state.reveal === 0){
+    card.classList.add('blurred');
+    grid.classList.add('blurred');
+  }
+  $('cardZone').appendChild(card);
+  $('cardZone').appendChild(grid);
+
+  $('revealBtn').hidden = state.reveal !== 0;
+  $('revealBtn').textContent = 'Unblur the words';
+
+  const cmd = state.mode === 'hashed'
+    ? "printf '%s' " + digits.replace(/6/g, '0') + " | sha256sum" + (state.entBits === 128 ? " | cut -c1-32" : "")
+    : "python3 -c \"print('%0" + (state.entBits / 4) + "x' % (int('" + digits +
+      "'.replace('6','0'), 6) % (1 << " + state.entBits + ")))\"";
+
+  if (state.reveal){
+    $('receipt').hidden = false;
+    const cleaned = digits.replace(/6/g, '0');
+    const prettyAs = digits.replace(/(.{5})/g, '$1 ').trimEnd();
+    const prettyClean = cleaned.replace(/(.{5})/g, '$1 ').trimEnd();
+    const wordsN = state.entBits === 256 ? '24' : '12';
+    $('receipt').innerHTML =
+      '<div><b>mode</b> ' + (state.mode === 'exact'
+          ? 'transparent · base-6 rejection sampling · ' + digits.length + ' rolls'
+          : 'hardened · SHA-256 of cleaned rolls · ' + digits.length + ' rolls') + '</div>' +
+      '<div><b>as typed (6 stays 6)</b> ' + prettyAs + '</div>' +
+      '<div><b>after confirm (6 is 0)</b> ' + prettyClean + '</div>' +
+      '<div><b>entropy</b> ' + hex(bytes) + '</div>' +
+      '<div><b>checksum</b> <span class="csbits">' + m.cs + '</span></div>' +
+      '<div><b>phrase</b> ' + escapeHtml(m.words.join(' ')) + '</div>' +
+      '<div><b>reproduce</b> ' + escapeHtml(cmd) + '</div>' +
+      (state.mode === 'hashed'
+        ? '<div class="sq-warn" style="margin-top:10px"><strong>Ian Coleman check.</strong> Paste the faces as you typed them (sixes still 6). His Dice [1–6] filter throws away 0. If you paste the cleaned zeros, those rolls vanish and the words change.<br>' +
+          '1. Turn <em>auto-detect / auto compute</em> off.<br>' +
+          '2. Entropy type: Dice [1–6].<br>' +
+          '3. Mnemonic length: ' + wordsN + ' words — not “Use Raw Entropy”.<br>' +
+          '4. Paste the line below. He will turn 6 into 0 himself.</div>' +
+          '<div style="margin-top:8px"><b>paste into Coleman Dice [1–6]</b> ' + digits + '</div>' +
+          '<div><b>cleaned (for sha256sum only)</b> ' + cleaned + '</div>'
+        : '<div class="sq-warn" style="margin-top:10px">Transparent mode will not match Ian Coleman. Coleman’s hashed dice path is our hardened mode. Coleman’s “raw” path uses a different bit map and is not this tool.</div>');
+    if (VARIANT === 'full' && typeof armWallet === 'function') armWallet(m.words);
+  } else {
+    $('receipt').hidden = true;
+    if (typeof resetWallet === 'function') resetWallet();
+  }
+}
+
+function wordCard(words){
+  const card = document.createElement('div');
+  card.className = 'wordcard';
+  words.forEach((w,i)=>{
+    const d = document.createElement('div');
+    d.className = 'word';
+    const n = document.createElement('span'); n.className = 'n'; n.textContent = i+1;
+    const s = document.createElement('span'); s.textContent = w;
+    d.appendChild(n); d.appendChild(s);
+    card.appendChild(d);
+  });
+  return card;
+}
+
+function bitGrid(bits, cs){
+  const wrap = document.createElement('div');
+  wrap.className = 'bitwrap';
+  wrap.style.marginTop = '16px';
+  const g = document.createElement('div');
+  g.className = 'bitgrid';
+  g.setAttribute('aria-hidden','true');
+  for (const b of bits){
+    const i = document.createElement('i');
+    if (b === '1') i.className = 'one';
+    g.appendChild(i);
+  }
+  for (const b of cs){
+    const i = document.createElement('i');
+    i.className = 'cs' + (b === '1' ? ' one' : '');
+    g.appendChild(i);
+  }
+  const l = document.createElement('div');
+  l.className = 'legend';
+  l.innerHTML = '<span><i></i>0</span><span><i class="one"></i>1</span>' +
+                '<span><i class="cs"></i>checksum bits (SHA-256, not random)</span>';
+  wrap.appendChild(g); wrap.appendChild(l);
+  return wrap;
+}
+
+function escapeHtml(s){
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function resetWallet(){}
+function armWallet(){}
+
+
+if ($('hexIn')) $('hexIn').addEventListener('input', () => {
+  const h = $('hexIn').value.replace(/[^0-9a-fA-F]/g,'').toLowerCase();
+  const out = $('hexOut');
+  if (h.length !== 64 && h.length !== 32){ out.hidden = true; return; }
+  const m = entropyToMnemonic(hexToBytes(h));
+  out.hidden = false;
+  out.innerHTML = '<div><b>' + m.words.length + ' words</b> ' + m.words.join(' ') + '</div>' +
+                  '<div><b>checksum</b> <span class="csbits">' + m.cs + '</span></div>';
+});
+
+
+$('wipeBtn').onclick = () => {
+  if (!confirm('Clear rolls, words and derived keys in this tab, then reload the file?')) return;
+  const noise = '00000000000000000000';
+  try {
+    const rolls = $('rolls');
+    if (rolls){ rolls.disabled = false; rolls.value = noise; rolls.value = ''; }
+    const hex = $('hexIn');
+    if (hex) hex.value = '';
+    const phrase = $('hexOut');
+    if (phrase){ phrase.textContent = ''; phrase.hidden = true; }
+    if (typeof resetWallet === 'function') resetWallet();
+    if (typeof resetRolls === 'function') resetRolls();
+    if ($('cardZone')) $('cardZone').innerHTML = '';
+    if ($('receipt')){ $('receipt').innerHTML = ''; $('receipt').hidden = true; }
+    if ($('walletZpub')) $('walletZpub').textContent = '';
+    if ($('walletAddrs')) $('walletAddrs').innerHTML = '';
+    if ($('walletQr')) $('walletQr').innerHTML = '';
+  } catch (e) {}
+  try { sessionStorage.clear(); } catch (e) {}
+  try { localStorage.clear(); } catch (e) {}
+  try {
+    if (window.caches && caches.keys){
+      caches.keys().then(keys => keys.forEach(k => caches.delete(k)));
+    }
+  } catch (e) {}
+  try {
+    if (indexedDB && indexedDB.databases){
+      indexedDB.databases().then(dbs => {
+        (dbs || []).forEach(d => { if (d && d.name) indexedDB.deleteDatabase(d.name); });
+      });
+    }
+  } catch (e) {}
+  try { if (window.history && history.replaceState) history.replaceState(null, '', location.pathname || location.href); } catch (e) {}
+  location.reload();
+};
+
+$('refCode').textContent = REF;
+runSelfTest();
+rebuild();
+
+</script>
+
+</body>
+</html>

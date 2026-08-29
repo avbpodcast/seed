@@ -1,0 +1,4 @@
+cd1ae3241d695325077c8f8c5facb4a6bb641129b4f6b30472f9cf0c0ce57335  dice-to-seed_v1.0.0-basic.html
+03ae4ebab84d60a6ea9d52f0f63f951b2ab00a5385fbe1a2f84074a19fc2c505  dice-to-seed_v1.0.0-full.html
+7b1f57adc1bf8e9276b4193830b0d330ac0434fae848f4ace1bcf144ead73cc6  dice-to-seed_v1.0.0.html
+e5222463307868715aef17d7dca244e4807fe5b5c29559bb3a8090f0cc2983f7  Dice-to-Seed-v1.10.pdf

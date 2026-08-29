@@ -1,0 +1,1155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AVB 52 card generator · v1.0.0 Basic</title>
+<style>
+:root{
+  --paper:#F7F5EF; --grid:#E4E1D6; --ink:#191B1F; --ink-soft:#61645F;
+  --felt:#1E5B4A; --felt-soft:#E2EDE8; --red:#A8352A; --red-soft:#F6E8E5;
+  --amber:#C56A16; --amber-soft:#F6E7D4;
+  --ok:#2C6E49; --ok-soft:#E4F0E8;
+  --mono:ui-monospace,'SF Mono','Cascadia Mono',Consolas,Menlo,monospace;
+  --sans:system-ui,-apple-system,'Segoe UI',sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{background:var(--paper)}
+body{
+  font-family:var(--sans);color:var(--ink);line-height:1.55;
+  background:linear-gradient(var(--grid) 1px,transparent 1px),
+             linear-gradient(90deg,var(--grid) 1px,transparent 1px);
+  background-size:26px 26px;background-color:var(--paper);
+  min-height:100vh;padding:28px 16px 72px;
+}
+main{max-width:760px;margin:0 auto}
+.sheet{background:var(--paper);border:1.5px solid var(--ink);box-shadow:4px 4px 0 rgba(25,27,31,.11);padding:22px;margin-bottom:20px}
+.sheet.locked{opacity:.48;filter:grayscale(.3);background:#E8E6DE;box-shadow:none}
+.sheet.locked textarea,.sheet.locked button:not(.keep){cursor:default}
+.stamp{font-family:var(--mono);font-size:.78rem;letter-spacing:.04em;text-transform:uppercase;color:var(--ink-soft);margin-top:12px}
+.wordcard.blurred .word span:not(.n){filter:blur(8px);user-select:none}
+.wordcard.blurred{user-select:none}
+.receipt.blurred{filter:blur(7px);user-select:none}
+.bitwrap.blurred{filter:blur(6px);user-select:none}
+header.sheet{border-left:5px solid var(--felt)}
+h1{font-family:var(--mono);font-size:1.3rem;letter-spacing:-.01em;font-weight:700}
+h1 .pip{color:var(--felt)}
+h1 .v{color:var(--ink-soft);font-weight:400;font-size:.8rem}
+.sub{color:var(--ink-soft);font-size:.9rem;margin-top:6px;max-width:50ch}
+h2{font-family:var(--mono);font-size:.76rem;letter-spacing:.11em;text-transform:uppercase;color:var(--ink-soft);margin-bottom:13px}
+h2 .step{display:inline-block;border:1.5px solid var(--ink);width:21px;height:21px;line-height:19px;text-align:center;color:var(--ink);margin-right:8px;font-size:.72rem}
+.selftest{font-family:var(--mono);font-size:.78rem;border:1.5px solid var(--ok);background:var(--ok-soft);color:var(--ok);padding:9px 13px;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.selftest.fail{border-color:var(--red);background:var(--red-soft);color:var(--red)}
+.selftest button{font-family:inherit;font-size:inherit;color:inherit;background:none;border:1px solid currentColor;padding:2px 8px;cursor:pointer}
+#testDetail{font-family:var(--mono);font-size:.75rem;color:var(--ink-soft);margin-top:11px;white-space:pre-wrap}
+.toggle{display:flex;margin-bottom:10px;font-family:var(--mono);font-size:.82rem}
+.toggle button{flex:1;padding:9px 6px;border:1.5px solid var(--ink);background:var(--paper);cursor:pointer;font-family:inherit;font-size:inherit;color:var(--ink);line-height:1.3}
+.toggle button+button{border-left:none}
+.toggle button.on{background:var(--ink);color:var(--paper)}
+.toggle button:focus-visible{outline:2px solid var(--felt);outline-offset:2px}
+.ritual{background:var(--felt-soft);border-left:3px solid var(--felt);padding:12px 15px;font-size:.9rem;margin-top:14px}
+.ritual b{font-family:var(--mono)}
+.beats{display:flex;margin-top:14px;padding:0;list-style:none;font-family:var(--mono);font-size:.7rem;line-height:1.35}
+.beats li{flex:1;border:1.5px solid var(--ink);padding:8px 7px;background:var(--paper);color:var(--ink-soft)}
+.beats li+li{border-left:none}
+.beats li.on{background:var(--ink);color:var(--paper)}
+.beats li.done{background:var(--felt-soft);color:var(--felt);border-color:var(--felt)}
+.deallabel{font-family:var(--mono);font-size:.84rem;margin:0 0 8px;color:var(--ink)}
+.sheet.collapsed{padding:16px 22px}
+.notation{margin-top:12px;font-size:.86rem;border:1px dashed #C9C6BA;padding:11px 14px;background:#fff}
+.notation .lead{color:var(--ink-soft);margin-bottom:8px}
+.notation .keys{font-family:var(--mono);display:flex;flex-wrap:wrap;gap:6px;margin:8px 0}
+.notation .keys b{border:1.5px solid var(--ink);padding:2px 8px;font-weight:600;background:var(--paper)}
+.notation .keys b.soft{border-color:#C9C6BA;color:var(--ink-soft);font-weight:500}
+.notation .hint{font-family:var(--mono);font-size:.78rem;color:var(--ink-soft);line-height:1.55}
+.notation .hint em{color:var(--ink);font-style:normal;font-weight:600}
+.notation .row{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.helpbtn{font-family:var(--mono);font-size:.75rem;border:1.5px solid var(--ink);background:var(--paper);color:var(--ink);padding:5px 10px;cursor:pointer}
+.readas{font-family:var(--mono);font-size:.78rem;color:var(--ink-soft);margin-top:8px;min-height:1.3em}
+.readas b{color:var(--ink);font-weight:600}
+.overlay{position:fixed;inset:0;background:rgba(25,27,31,.45);z-index:20;display:flex;align-items:flex-start;justify-content:center;padding:28px 16px;overflow:auto}
+.overlay[hidden]{display:none}
+.sheetpop{background:var(--paper);border:1.5px solid var(--ink);box-shadow:6px 6px 0 rgba(25,27,31,.16);max-width:560px;width:100%;padding:20px}
+.sheetpop h3{font-family:var(--mono);font-size:.95rem;margin-bottom:10px}
+.cheats th,.cheats td{font-family:var(--mono);font-size:.78rem;text-align:left;padding:5px 8px;border-bottom:1px solid var(--grid)}
+.cheats th{color:var(--ink-soft);font-weight:600;text-transform:uppercase;letter-spacing:.06em;font-size:.68rem}
+.cheats td:first-child{color:var(--ink)}
+.cheats code{font-family:inherit;background:#fff;border:1px solid #C9C6BA;padding:0 5px}
+textarea{width:100%;min-height:84px;font-family:var(--mono);font-size:1rem;letter-spacing:.1em;line-height:1.85;
+  border:1.5px solid var(--ink);background:#fff;padding:13px;resize:vertical;color:var(--ink);text-transform:uppercase}
+textarea:focus{outline:2px solid var(--felt);outline-offset:1px}
+textarea:disabled{background:#F2F0EA;color:var(--ink-soft)}
+input[type=text]{width:100%;font-family:var(--mono);font-size:.9rem;border:1.5px solid var(--ink);background:#fff;padding:10px;color:var(--ink)}
+.rowbtn{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+.rowbtn button{font-family:var(--mono);font-size:.78rem;border:1.5px solid var(--ink);background:var(--paper);color:var(--ink);padding:6px 12px;cursor:pointer}
+.rowbtn button:focus-visible{outline:2px solid var(--felt);outline-offset:2px}
+.bigbtn{display:block;width:100%;margin-top:15px;font-family:var(--mono);font-size:.86rem;letter-spacing:.03em;
+  border:1.5px solid var(--felt);background:var(--felt);color:var(--paper);padding:13px;cursor:pointer;line-height:1.45}
+.bigbtn:disabled{border-color:#C9C6BA;background:#EDEBE4;color:var(--ink-soft);cursor:default}
+.bigbtn small{display:block;font-size:.74rem;opacity:.85;margin-top:3px}
+.pips{display:grid;grid-template-columns:repeat(15,1fr);gap:3px;margin-top:13px}
+.pips i{aspect-ratio:1;border:1px solid #C9C6BA;background:transparent}
+.pips i.set{background:var(--felt);border-color:var(--felt)}
+.pips i.over{background:var(--red);border-color:var(--red)}
+.meter{display:flex;justify-content:space-between;font-family:var(--mono);font-size:.8rem;color:var(--ink-soft);margin-top:9px;flex-wrap:wrap;gap:10px}
+.meter b{color:var(--ink)}
+.meter .done{color:var(--ok);font-weight:700}
+.hand{display:flex;flex-wrap:wrap;gap:4px;margin-top:12px}
+.hand span{font-family:var(--mono);font-size:.82rem;border:1px solid #C9C6BA;background:#fff;padding:2px 6px;color:var(--ink)}
+.hand span.red{color:var(--red)}
+.hand span.r2{background:rgba(25,27,31,.07)}
+.hand span.r3{background:rgba(25,27,31,.14)}
+.hand span.r4{background:rgba(25,27,31,.22);border-color:#9E9B90}
+.hand span sup{font-size:.6em;opacity:.5;margin-left:2px}
+.handnote{font-family:var(--mono);font-size:.7rem;color:var(--ink-soft);margin-top:9px}
+.ledger{display:grid;grid-template-columns:repeat(13,1fr);gap:3px;margin-top:11px}
+.ledger div{border:1px solid #C9C6BA;background:#fff;text-align:center;font-family:var(--mono);
+  font-size:.66rem;padding:3px 0 2px;color:var(--ink-soft);line-height:1.3}
+.ledger div b{display:block;color:var(--ink);font-size:.74rem;font-weight:600}
+.ledger div.used{background:var(--felt);border-color:var(--felt);color:var(--paper)}
+.ledger div.used b{color:var(--paper)}
+.hand span.spent{opacity:.38}
+.msg{font-family:var(--mono);font-size:.8rem;padding:9px 13px;margin-top:12px;border:1.5px solid var(--red);background:var(--red-soft);color:var(--red)}
+.msg.note{border-color:var(--felt);background:var(--felt-soft);color:var(--felt)}
+.bitgrid{display:grid;grid-template-columns:repeat(32,1fr);gap:2px}
+.bitgrid i{aspect-ratio:1;border:1px solid #C9C6BA;background:transparent}
+.bitgrid i.one{background:var(--felt);border-color:var(--felt)}
+.bitgrid i.cs{border-color:var(--amber)}
+.bitgrid i.cs.one{background:var(--amber)}
+.legend{display:flex;gap:16px;font-family:var(--mono);font-size:.73rem;color:var(--ink-soft);margin-top:11px;flex-wrap:wrap}
+.legend i{width:10px;height:10px;border:1px solid #C9C6BA;display:inline-block;margin-right:5px;vertical-align:-1px}
+.legend i.one{background:var(--felt);border-color:var(--felt)}
+.legend i.cs{background:var(--amber);border-color:var(--amber)}
+.wordcard{display:grid;grid-template-columns:repeat(auto-fill,minmax(155px,1fr));gap:8px}
+.word{border:1px solid var(--grid);border-bottom:1.5px solid var(--ink);padding:7px 10px;font-family:var(--mono);font-size:.94rem;display:flex;gap:9px;background:#fff}
+.word .n{color:var(--ink-soft);font-size:.72rem;width:2ch;text-align:right;flex-shrink:0;padding-top:3px}
+.placeholder{color:var(--ink-soft);font-size:.88rem;font-style:italic}
+.receipt{font-family:var(--mono);font-size:.76rem;color:var(--ink-soft);margin-top:15px;word-break:break-all;border-top:1px dashed #C9C6BA;padding-top:12px}
+.receipt div{margin-bottom:4px}
+.receipt b{color:var(--ink);font-weight:600}
+.receipt .csbits{color:var(--amber)}
+pre{font-family:var(--mono);font-size:.72rem;background:#fff;border:1px solid var(--grid);border-left:3px solid var(--felt);padding:11px;overflow-x:auto;color:var(--ink);line-height:1.5}
+.stampbox{border:1.5px solid var(--red);background:var(--red-soft);color:var(--red);
+  font-family:var(--mono);font-size:.78rem;letter-spacing:.03em;padding:10px 13px;margin-bottom:14px;text-transform:uppercase}
+.notes{font-size:.86rem;color:var(--ink-soft)}
+.notes p{margin-bottom:9px}
+.notes p:last-child{margin-bottom:0}
+.notes strong{color:var(--ink)}
+@media (max-width:600px){
+  .bitgrid{grid-template-columns:repeat(16,1fr)}
+  .pips{grid-template-columns:repeat(10,1fr)}
+  .sheet{padding:17px}
+  .toggle{font-size:.75rem}
+}
+
+
+.back{
+  display:inline-block;font-family:var(--mono);font-size:.72rem;letter-spacing:.04em;
+  color:var(--ink-soft);text-decoration:none;border-bottom:1px solid var(--grid);
+  margin:0 0 10px
+}
+.back:hover{color:var(--ink);border-bottom-color:var(--ink)}
+.sitefoot{
+  margin-top:18px;padding:10px 4px 0;
+  font-family:var(--mono);font-size:.72rem;letter-spacing:.04em;
+  color:var(--ink-soft);display:flex;flex-wrap:wrap;gap:8px 20px;
+  justify-content:center;text-align:center;width:100%
+}
+.sitefoot a{color:var(--ink-soft);text-decoration:none;border-bottom:1px solid var(--grid)}
+.sitefoot a:hover{color:var(--ink);border-bottom-color:var(--ink)}
+</style>
+</head>
+<body>
+<main>
+
+<header class="sheet">
+  <a class="back" href="avb-52-card-generator_v1.0.0.html">← choose a file</a>
+  
+  <h1>AVB 52 CARD GENERATOR <span class="pip">&#9824;&#9827;</span><span class="pip" style="color:var(--red)">&#9829;&#9830;</span> <span class="v">v1.0.0 · Basic</span></h1>
+  <p class="sub">Ritual only. Cards become a 12- or 24-word BIP39 phrase. This file stops at the words — no addresses, no QR, no private keys in memory. Ranks only by default: 45, or 45 + 45. Full cards: 30, or 30 + 30.</p>
+</header>
+
+<section class="sheet">
+  <div class="selftest" id="stBar">
+    <span id="stText">running self-test…</span>
+    <button id="stToggle" type="button">details</button>
+  </div>
+  <div id="testDetail" hidden></div>
+</section>
+
+<section class="sheet" id="setup">
+  <h2><span class="step">1</span>Set the length before you touch the deck</h2>
+  <div class="toggle" role="group" aria-label="Phrase length">
+    <button id="w12" class="on" type="button">12 words<br><span id="w12n">45 ranks · one deal</span></button>
+    <button id="w24" type="button">24 words<br><span id="w24n">45 + 45 · two deals</span></button>
+  </div>
+  <div class="toggle" role="group" aria-label="Reading mode">
+    <button id="mRank" class="on" type="button">Ranks only<br>45 per deal · ignore suits</button>
+    <button id="mFull" type="button">Full cards<br>30 per deal · rank + suit</button>
+  </div>
+  <div class="ritual" id="ritual"></div>
+  <ol class="beats" id="beats" hidden></ol>
+  <div class="notation" id="notation"></div>
+</section>
+
+<div class="overlay" id="helpOverlay" hidden>
+  <div class="sheetpop" role="dialog" aria-modal="true" aria-labelledby="helpTitle">
+    <div class="rowbtn" style="justify-content:space-between;align-items:center;margin:0 0 12px">
+      <h3 id="helpTitle">What do I type?</h3>
+      <button class="helpbtn" id="helpClose" type="button">Close</button>
+    </div>
+    <div id="helpBody"></div>
+  </div>
+</div>
+
+<section class="sheet" id="round1sheet">
+  <h2><span class="step">2</span><span id="head1">Round one</span></h2>
+  <p class="deallabel" id="dealLabel1">Type 45 ranks — one deal</p>
+  <p class="sub" style="margin:0 0 12px">Riffle at least seven times or wash the cards face down for thirty seconds, then deal face up and type each one.</p>
+  <textarea id="ta1" spellcheck="false" autocomplete="off" aria-label="Deal one cards"></textarea>
+  <div class="readas" id="read1"></div>
+  <div class="rowbtn">
+    <button id="undo1" type="button">Undo last</button>
+    <button id="clear1" type="button">Clear round</button>
+  </div>
+  <div class="pips" id="pips1"></div>
+  <div class="meter">
+    <span>round one <b id="n1">0</b> of <b id="need1">45</b> <span id="done1" class="done" hidden>complete</span></span>
+    <span id="tag1"></span>
+  </div>
+  <div class="hand" id="hand1"></div>
+  <div class="ledger" id="led1" hidden></div>
+  <div class="handnote" id="note1" hidden></div>
+  <div class="msg" id="msg1" hidden></div>
+  <div class="msg note" id="gateHelp" hidden></div>
+  <button class="bigbtn" id="startRound2" type="button" hidden disabled></button>
+  <div class="stamp" id="r1stamp" hidden>Deal one confirmed — this area is closed</div>
+</section>
+
+<section class="sheet" id="round2sheet" hidden>
+  <h2><span class="step">3</span>Round two</h2>
+  <p class="deallabel" id="dealLabel2">Type 45 ranks — deal two of two</p>
+  <p class="sub" style="margin:0 0 12px" id="round2help">Gather all 52 cards, including every card already face up. Shuffle the whole deck again — at least seven riffles, or a thirty-second wash face down — then deal the same count as deal one. Do not continue from the leftover cards.</p>
+  <textarea id="ta2" spellcheck="false" autocomplete="off" aria-label="Deal two cards"></textarea>
+  <div class="readas" id="read2"></div>
+  <div class="rowbtn">
+    <button id="undo2" type="button">Undo last</button>
+    <button id="clear2" type="button">Clear round</button>
+  </div>
+  <div class="pips" id="pips2"></div>
+  <div class="meter">
+    <span>round two <b id="n2">0</b> of <b id="need2">45</b> <span id="done2" class="done" hidden>complete</span></span>
+    <span id="tag2"></span>
+  </div>
+  <div class="hand" id="hand2"></div>
+  <div class="ledger" id="led2" hidden></div>
+  <div class="handnote" id="note2" hidden></div>
+  <div class="msg" id="msg2" hidden></div>
+  <div class="msg note" id="finishHelp" hidden></div>
+  <button class="bigbtn" id="finishRound2" type="button" hidden disabled></button>
+  <button class="bigbtn" id="editRound1" type="button" style="background:var(--paper);color:var(--felt)">Correct a mistake in deal one<small>reopens deal one — this undoes the confirmation and clears deal two</small></button>
+  <div class="stamp" id="r2stamp" hidden>Deal two finished — this area is closed</div>
+</section>
+
+<section class="sheet collapsed" id="phraseSheet">
+  <p class="placeholder" id="phraseWait">Words stay hidden until the deal is finished.</p>
+  <div id="phraseBody" hidden>
+    <h2><span class="step" id="phraseStep">3</span>Recovery phrase</h2>
+    <div id="cardZone"></div>
+    <button class="bigbtn" id="revealBtn" type="button" hidden></button>
+    <div class="receipt" id="receipt" hidden></div>
+  </div>
+</section>
+
+<section class="sheet">
+  <h2><span class="step" id="stepCheck">4</span>Check entropy against another tool</h2>
+  <input type="text" id="hexIn" spellcheck="false" autocomplete="off" placeholder="32 or 64 hex characters">
+  <div id="hexOut" class="receipt" hidden></div>
+</section>
+
+<section class="sheet">
+  <h2><span class="step" id="stepRepro">5</span>Reproduce this yourself</h2>
+  <p class="sub" style="margin:0 0 11px">The whole extractor in plain Python. Each round is its own list, because each round starts from a full deck.</p>
+  <pre id="refCode"></pre>
+</section>
+
+<section class="sheet notes">
+  <div class="stampbox">Write the words on paper by hand. Never photograph, paste, or retype them on a connected device.</div>
+  <p><strong>The count is one number, repeated.</strong> Ranks only (default): 45 for 12 words, 45 then 45 for 24 words. Full cards: 30 for 12 words, 30 then 30 for 24 words. You never mix 45 with 30. Round two is a new shuffle of all 52, not the leftover cards.</p>
+  <p><strong>Round two is a full reshuffle, not a continuation.</strong> Every card goes back in, including the ones already face up, and it gets the same shuffle round one got. The tool models each round as a draw from a complete fifty-two card deck, so dealing round two from the leftovers would make the arithmetic wrong and the output non-uniform. This is the one instruction here that cannot be checked in software.</p>
+  <p><strong>The shuffle has more room than it looks.</strong> Two full-card rounds of thirty carry 311.3 bits against the 256 needed; two ranks-only rounds of forty-five have a similar surplus. What the ritual does not tolerate is skipping the second shuffle: a round two dealt from an unshuffled deck would repeat round one.</p>
+  <p><strong>The length is fixed before the first card, on purpose.</strong> The twelve-word phrase from round one is not merely related to the twenty-four word phrase — it is the first half of it, and shares the first eleven words. If you could generate twelve words, look at them, then extend, anyone who saw that intermediate phrase would hold half your final seed. Changing the length clears the deal.</p>
+  <p><strong>Repeats are caught within a round only.</strong> A card already face up in this round cannot come off the deck again, so any repeat is flagged. After the reshuffle that check restarts, since round two can legitimately repeat cards from round one.</p>
+  <p><strong>Ranks-only is the default.</strong> One keystroke a card and no suit to read. The round is longer: forty-five ranks instead of thirty full cards. Switch to full cards before the first card if you want the shorter deal.</p>
+  <p><strong>Verify before funding.</strong> Restore the phrase on a hardware wallet or a second BIP39 implementation and confirm identical addresses.</p>
+  <p><strong>This is the Basic file.</strong> It never derives keys. The Full file adds the first three bech32 addresses, the account zpub, and a SeedQR after the phrase exists.</p>
+</section>
+
+<footer class="sitefoot">
+  <span>v1.0.0</span>
+  <a href="https://allesvoorbitcoin.be/21tools" target="_blank" rel="noopener noreferrer">allesvoorbitcoin.be/21tools</a>
+  <a href="https://github.com/avbpodcast" target="_blank" rel="noopener noreferrer">GitHub</a>
+  <a href="https://coinos.io/pay/Mr21" target="_blank" rel="noopener noreferrer">value for value</a>
+</footer>
+</main>
+
+<script>
+"use strict";
+
+/* ============================================================
+   BIP39 English wordlist
+   ============================================================ */
+const WORDS = ["abandon","ability","able","about","above","absent","absorb","abstract","absurd","abuse","access","accident","account","accuse","achieve","acid","acoustic","acquire","across","act","action","actor","actress","actual","adapt","add","addict","address","adjust","admit","adult","advance","advice","aerobic","affair","afford","afraid","again","age","agent","agree","ahead","aim","air","airport","aisle","alarm","album","alcohol","alert","alien","all","alley","allow","almost","alone","alpha","already","also","alter","always","amateur","amazing","among","amount","amused","analyst","anchor","ancient","anger","angle","angry","animal","ankle","announce","annual","another","answer","antenna","antique","anxiety","any","apart","apology","appear","apple","approve","april","arch","arctic","area","arena","argue","arm","armed","armor","army","around","arrange","arrest","arrive","arrow","art","artefact","artist","artwork","ask","aspect","assault","asset","assist","assume","asthma","athlete","atom","attack","attend","attitude","attract","auction","audit","august","aunt","author","auto","autumn","average","avocado","avoid","awake","aware","away","awesome","awful","awkward","axis","baby","bachelor","bacon","badge","bag","balance","balcony","ball","bamboo","banana","banner","bar","barely","bargain","barrel","base","basic","basket","battle","beach","bean","beauty","because","become","beef","before","begin","behave","behind","believe","below","belt","bench","benefit","best","betray","better","between","beyond","bicycle","bid","bike","bind","biology","bird","birth","bitter","black","blade","blame","blanket","blast","bleak","bless","blind","blood","blossom","blouse","blue","blur","blush","board","boat","body","boil","bomb","bone","bonus","book","boost","border","boring","borrow","boss","bottom","bounce","box","boy","bracket","brain","brand","brass","brave","bread","breeze","brick","bridge","brief","bright","bring","brisk","broccoli","broken","bronze","broom","brother","brown","brush","bubble","buddy","budget","buffalo","build","bulb","bulk","bullet","bundle","bunker","burden","burger","burst","bus","business","busy","butter","buyer","buzz","cabbage","cabin","cable","cactus","cage","cake","call","calm","camera","camp","can","canal","cancel","candy","cannon","canoe","canvas","canyon","capable","capital","captain","car","carbon","card","cargo","carpet","carry","cart","case","cash","casino","castle","casual","cat","catalog","catch","category","cattle","caught","cause","caution","cave","ceiling","celery","cement","census","century","cereal","certain","chair","chalk","champion","change","chaos","chapter","charge","chase","chat","cheap","check","cheese","chef","cherry","chest","chicken","chief","child","chimney","choice","choose","chronic","chuckle","chunk","churn","cigar","cinnamon","circle","citizen","city","civil","claim","clap","clarify","claw","clay","clean","clerk","clever","click","client","cliff","climb","clinic","clip","clock","clog","close","cloth","cloud","clown","club","clump","cluster","clutch","coach","coast","coconut","code","coffee","coil","coin","collect","color","column","combine","come","comfort","comic","common","company","concert","conduct","confirm","congress","connect","consider","control","convince","cook","cool","copper","copy","coral","core","corn","correct","cost","cotton","couch","country","couple","course","cousin","cover","coyote","crack","cradle","craft","cram","crane","crash","crater","crawl","crazy","cream","credit","creek","crew","cricket","crime","crisp","critic","crop","cross","crouch","crowd","crucial","cruel","cruise","crumble","crunch","crush","cry","crystal","cube","culture","cup","cupboard","curious","current","curtain","curve","cushion","custom","cute","cycle","dad","damage","damp","dance","danger","daring","dash","daughter","dawn","day","deal","debate","debris","decade","december","decide","decline","decorate","decrease","deer","defense","define","defy","degree","delay","deliver","demand","demise","denial","dentist","deny","depart","depend","deposit","depth","deputy","derive","describe","desert","design","desk","despair","destroy","detail","detect","develop","device","devote","diagram","dial","diamond","diary","dice","diesel","diet","differ","digital","dignity","dilemma","dinner","dinosaur","direct","dirt","disagree","discover","disease","dish","dismiss","disorder","display","distance","divert","divide","divorce","dizzy","doctor","document","dog","doll","dolphin","domain","donate","donkey","donor","door","dose","double","dove","draft","dragon","drama","drastic","draw","dream","dress","drift","drill","drink","drip","drive","drop","drum","dry","duck","dumb","dune","during","dust","dutch","duty","dwarf","dynamic","eager","eagle","early","earn","earth","easily","east","easy","echo","ecology","economy","edge","edit","educate","effort","egg","eight","either","elbow","elder","electric","elegant","element","elephant","elevator","elite","else","embark","embody","embrace","emerge","emotion","employ","empower","empty","enable","enact","end","endless","endorse","enemy","energy","enforce","engage","engine","enhance","enjoy","enlist","enough","enrich","enroll","ensure","enter","entire","entry","envelope","episode","equal","equip","era","erase","erode","erosion","error","erupt","escape","essay","essence","estate","eternal","ethics","evidence","evil","evoke","evolve","exact","example","excess","exchange","excite","exclude","excuse","execute","exercise","exhaust","exhibit","exile","exist","exit","exotic","expand","expect","expire","explain","expose","express","extend","extra","eye","eyebrow","fabric","face","faculty","fade","faint","faith","fall","false","fame","family","famous","fan","fancy","fantasy","farm","fashion","fat","fatal","father","fatigue","fault","favorite","feature","february","federal","fee","feed","feel","female","fence","festival","fetch","fever","few","fiber","fiction","field","figure","file","film","filter","final","find","fine","finger","finish","fire","firm","first","fiscal","fish","fit","fitness","fix","flag","flame","flash","flat","flavor","flee","flight","flip","float","flock","floor","flower","fluid","flush","fly","foam","focus","fog","foil","fold","follow","food","foot","force","forest","forget","fork","fortune","forum","forward","fossil","foster","found","fox","fragile","frame","frequent","fresh","friend","fringe","frog","front","frost","frown","frozen","fruit","fuel","fun","funny","furnace","fury","future","gadget","gain","galaxy","gallery","game","gap","garage","garbage","garden","garlic","garment","gas","gasp","gate","gather","gauge","gaze","general","genius","genre","gentle","genuine","gesture","ghost","giant","gift","giggle","ginger","giraffe","girl","give","glad","glance","glare","glass","glide","glimpse","globe","gloom","glory","glove","glow","glue","goat","goddess","gold","good","goose","gorilla","gospel","gossip","govern","gown","grab","grace","grain","grant","grape","grass","gravity","great","green","grid","grief","grit","grocery","group","grow","grunt","guard","guess","guide","guilt","guitar","gun","gym","habit","hair","half","hammer","hamster","hand","happy","harbor","hard","harsh","harvest","hat","have","hawk","hazard","head","health","heart","heavy","hedgehog","height","hello","helmet","help","hen","hero","hidden","high","hill","hint","hip","hire","history","hobby","hockey","hold","hole","holiday","hollow","home","honey","hood","hope","horn","horror","horse","hospital","host","hotel","hour","hover","hub","huge","human","humble","humor","hundred","hungry","hunt","hurdle","hurry","hurt","husband","hybrid","ice","icon","idea","identify","idle","ignore","ill","illegal","illness","image","imitate","immense","immune","impact","impose","improve","impulse","inch","include","income","increase","index","indicate","indoor","industry","infant","inflict","inform","inhale","inherit","initial","inject","injury","inmate","inner","innocent","input","inquiry","insane","insect","inside","inspire","install","intact","interest","into","invest","invite","involve","iron","island","isolate","issue","item","ivory","jacket","jaguar","jar","jazz","jealous","jeans","jelly","jewel","job","join","joke","journey","joy","judge","juice","jump","jungle","junior","junk","just","kangaroo","keen","keep","ketchup","key","kick","kid","kidney","kind","kingdom","kiss","kit","kitchen","kite","kitten","kiwi","knee","knife","knock","know","lab","label","labor","ladder","lady","lake","lamp","language","laptop","large","later","latin","laugh","laundry","lava","law","lawn","lawsuit","layer","lazy","leader","leaf","learn","leave","lecture","left","leg","legal","legend","leisure","lemon","lend","length","lens","leopard","lesson","letter","level","liar","liberty","library","license","life","lift","light","like","limb","limit","link","lion","liquid","list","little","live","lizard","load","loan","lobster","local","lock","logic","lonely","long","loop","lottery","loud","lounge","love","loyal","lucky","luggage","lumber","lunar","lunch","luxury","lyrics","machine","mad","magic","magnet","maid","mail","main","major","make","mammal","man","manage","mandate","mango","mansion","manual","maple","marble","march","margin","marine","market","marriage","mask","mass","master","match","material","math","matrix","matter","maximum","maze","meadow","mean","measure","meat","mechanic","medal","media","melody","melt","member","memory","mention","menu","mercy","merge","merit","merry","mesh","message","metal","method","middle","midnight","milk","million","mimic","mind","minimum","minor","minute","miracle","mirror","misery","miss","mistake","mix","mixed","mixture","mobile","model","modify","mom","moment","monitor","monkey","monster","month","moon","moral","more","morning","mosquito","mother","motion","motor","mountain","mouse","move","movie","much","muffin","mule","multiply","muscle","museum","mushroom","music","must","mutual","myself","mystery","myth","naive","name","napkin","narrow","nasty","nation","nature","near","neck","need","negative","neglect","neither","nephew","nerve","nest","net","network","neutral","never","news","next","nice","night","noble","noise","nominee","noodle","normal","north","nose","notable","note","nothing","notice","novel","now","nuclear","number","nurse","nut","oak","obey","object","oblige","obscure","observe","obtain","obvious","occur","ocean","october","odor","off","offer","office","often","oil","okay","old","olive","olympic","omit","once","one","onion","online","only","open","opera","opinion","oppose","option","orange","orbit","orchard","order","ordinary","organ","orient","original","orphan","ostrich","other","outdoor","outer","output","outside","oval","oven","over","own","owner","oxygen","oyster","ozone","pact","paddle","page","pair","palace","palm","panda","panel","panic","panther","paper","parade","parent","park","parrot","party","pass","patch","path","patient","patrol","pattern","pause","pave","payment","peace","peanut","pear","peasant","pelican","pen","penalty","pencil","people","pepper","perfect","permit","person","pet","phone","photo","phrase","physical","piano","picnic","picture","piece","pig","pigeon","pill","pilot","pink","pioneer","pipe","pistol","pitch","pizza","place","planet","plastic","plate","play","please","pledge","pluck","plug","plunge","poem","poet","point","polar","pole","police","pond","pony","pool","popular","portion","position","possible","post","potato","pottery","poverty","powder","power","practice","praise","predict","prefer","prepare","present","pretty","prevent","price","pride","primary","print","priority","prison","private","prize","problem","process","produce","profit","program","project","promote","proof","property","prosper","protect","proud","provide","public","pudding","pull","pulp","pulse","pumpkin","punch","pupil","puppy","purchase","purity","purpose","purse","push","put","puzzle","pyramid","quality","quantum","quarter","question","quick","quit","quiz","quote","rabbit","raccoon","race","rack","radar","radio","rail","rain","raise","rally","ramp","ranch","random","range","rapid","rare","rate","rather","raven","raw","razor","ready","real","reason","rebel","rebuild","recall","receive","recipe","record","recycle","reduce","reflect","reform","refuse","region","regret","regular","reject","relax","release","relief","rely","remain","remember","remind","remove","render","renew","rent","reopen","repair","repeat","replace","report","require","rescue","resemble","resist","resource","response","result","retire","retreat","return","reunion","reveal","review","reward","rhythm","rib","ribbon","rice","rich","ride","ridge","rifle","right","rigid","ring","riot","ripple","risk","ritual","rival","river","road","roast","robot","robust","rocket","romance","roof","rookie","room","rose","rotate","rough","round","route","royal","rubber","rude","rug","rule","run","runway","rural","sad","saddle","sadness","safe","sail","salad","salmon","salon","salt","salute","same","sample","sand","satisfy","satoshi","sauce","sausage","save","say","scale","scan","scare","scatter","scene","scheme","school","science","scissors","scorpion","scout","scrap","screen","script","scrub","sea","search","season","seat","second","secret","section","security","seed","seek","segment","select","sell","seminar","senior","sense","sentence","series","service","session","settle","setup","seven","shadow","shaft","shallow","share","shed","shell","sheriff","shield","shift","shine","ship","shiver","shock","shoe","shoot","shop","short","shoulder","shove","shrimp","shrug","shuffle","shy","sibling","sick","side","siege","sight","sign","silent","silk","silly","silver","similar","simple","since","sing","siren","sister","situate","six","size","skate","sketch","ski","skill","skin","skirt","skull","slab","slam","sleep","slender","slice","slide","slight","slim","slogan","slot","slow","slush","small","smart","smile","smoke","smooth","snack","snake","snap","sniff","snow","soap","soccer","social","sock","soda","soft","solar","soldier","solid","solution","solve","someone","song","soon","sorry","sort","soul","sound","soup","source","south","space","spare","spatial","spawn","speak","special","speed","spell","spend","sphere","spice","spider","spike","spin","spirit","split","spoil","sponsor","spoon","sport","spot","spray","spread","spring","spy","square","squeeze","squirrel","stable","stadium","staff","stage","stairs","stamp","stand","start","state","stay","steak","steel","stem","step","stereo","stick","still","sting","stock","stomach","stone","stool","story","stove","strategy","street","strike","strong","struggle","student","stuff","stumble","style","subject","submit","subway","success","such","sudden","suffer","sugar","suggest","suit","summer","sun","sunny","sunset","super","supply","supreme","sure","surface","surge","surprise","surround","survey","suspect","sustain","swallow","swamp","swap","swarm","swear","sweet","swift","swim","swing","switch","sword","symbol","symptom","syrup","system","table","tackle","tag","tail","talent","talk","tank","tape","target","task","taste","tattoo","taxi","teach","team","tell","ten","tenant","tennis","tent","term","test","text","thank","that","theme","then","theory","there","they","thing","this","thought","three","thrive","throw","thumb","thunder","ticket","tide","tiger","tilt","timber","time","tiny","tip","tired","tissue","title","toast","tobacco","today","toddler","toe","together","toilet","token","tomato","tomorrow","tone","tongue","tonight","tool","tooth","top","topic","topple","torch","tornado","tortoise","toss","total","tourist","toward","tower","town","toy","track","trade","traffic","tragic","train","transfer","trap","trash","travel","tray","treat","tree","trend","trial","tribe","trick","trigger","trim","trip","trophy","trouble","truck","true","truly","trumpet","trust","truth","try","tube","tuition","tumble","tuna","tunnel","turkey","turn","turtle","twelve","twenty","twice","twin","twist","two","type","typical","ugly","umbrella","unable","unaware","uncle","uncover","under","undo","unfair","unfold","unhappy","uniform","unique","unit","universe","unknown","unlock","until","unusual","unveil","update","upgrade","uphold","upon","upper","upset","urban","urge","usage","use","used","useful","useless","usual","utility","vacant","vacuum","vague","valid","valley","valve","van","vanish","vapor","various","vast","vault","vehicle","velvet","vendor","venture","venue","verb","verify","version","very","vessel","veteran","viable","vibrant","vicious","victory","video","view","village","vintage","violin","virtual","virus","visa","visit","visual","vital","vivid","vocal","voice","void","volcano","volume","vote","voyage","wage","wagon","wait","walk","wall","walnut","want","warfare","warm","warrior","wash","wasp","waste","water","wave","way","wealth","weapon","wear","weasel","weather","web","wedding","weekend","weird","welcome","west","wet","whale","what","wheat","wheel","when","where","whip","whisper","wide","width","wife","wild","will","win","window","wine","wing","wink","winner","winter","wire","wisdom","wise","wish","witness","wolf","woman","wonder","wood","wool","word","work","world","worry","worth","wrap","wreck","wrestle","wrist","write","wrong","yard","year","yellow","you","young","youth","zebra","zero","zone","zoo"];
+
+/* ============================================================
+   SHA-256 — pure JS, no Web Crypto, no secure-context requirement
+   ============================================================ */
+const K256 = [
+0x428a2f98,0x71374491,0xb5c0fbcf,0xe9b5dba5,0x3956c25b,0x59f111f1,0x923f82a4,0xab1c5ed5,
+0xd807aa98,0x12835b01,0x243185be,0x550c7dc3,0x72be5d74,0x80deb1fe,0x9bdc06a7,0xc19bf174,
+0xe49b69c1,0xefbe4786,0x0fc19dc6,0x240ca1cc,0x2de92c6f,0x4a7484aa,0x5cb0a9dc,0x76f988da,
+0x983e5152,0xa831c66d,0xb00327c8,0xbf597fc7,0xc6e00bf3,0xd5a79147,0x06ca6351,0x14292967,
+0x27b70a85,0x2e1b2138,0x4d2c6dfc,0x53380d13,0x650a7354,0x766a0abb,0x81c2c92e,0x92722c85,
+0xa2bfe8a1,0xa81a664b,0xc24b8b70,0xc76c51a3,0xd192e819,0xd6990624,0xf40e3585,0x106aa070,
+0x19a4c116,0x1e376c08,0x2748774c,0x34b0bcb5,0x391c0cb3,0x4ed8aa4a,0x5b9cca4f,0x682e6ff3,
+0x748f82ee,0x78a5636f,0x84c87814,0x8cc70208,0x90befffa,0xa4506ceb,0xbef9a3f7,0xc67178f2];
+
+function rotr(x,n){ return ((x>>>n)|(x<<(32-n)))>>>0; }
+
+function sha256(bytes){
+  const len = bytes.length;
+  const padded = (((len + 9) + 63) >> 6) << 6;
+  const buf = new Uint8Array(padded);
+  buf.set(bytes);
+  buf[len] = 0x80;
+  const dv = new DataView(buf.buffer);
+  dv.setUint32(padded - 8, Math.floor(len / 536870912));
+  dv.setUint32(padded - 4, (len * 8) >>> 0);
+  let h0=0x6a09e667,h1=0xbb67ae85,h2=0x3c6ef372,h3=0xa54ff53a,
+      h4=0x510e527f,h5=0x9b05688c,h6=0x1f83d9ab,h7=0x5be0cd19;
+  const w = new Uint32Array(64);
+  for (let off=0; off<padded; off+=64){
+    for (let i=0;i<16;i++) w[i] = dv.getUint32(off + i*4);
+    for (let i=16;i<64;i++){
+      const a1=w[i-15], b1=w[i-2];
+      const s0 = (rotr(a1,7) ^ rotr(a1,18) ^ (a1>>>3))>>>0;
+      const s1 = (rotr(b1,17) ^ rotr(b1,19) ^ (b1>>>10))>>>0;
+      w[i] = (w[i-16] + s0 + w[i-7] + s1) >>> 0;
+    }
+    let a=h0,b=h1,c=h2,d=h3,e=h4,f=h5,g=h6,h=h7;
+    for (let i=0;i<64;i++){
+      const S1 = (rotr(e,6) ^ rotr(e,11) ^ rotr(e,25))>>>0;
+      const ch = ((e & f) ^ (~e & g))>>>0;
+      const t1 = (h + S1 + ch + K256[i] + w[i])>>>0;
+      const S0 = (rotr(a,2) ^ rotr(a,13) ^ rotr(a,22))>>>0;
+      const mj = ((a & b) ^ (a & c) ^ (b & c))>>>0;
+      const t2 = (S0 + mj)>>>0;
+      h=g; g=f; f=e; e=(d+t1)>>>0; d=c; c=b; b=a; a=(t1+t2)>>>0;
+    }
+    h0=(h0+a)>>>0; h1=(h1+b)>>>0; h2=(h2+c)>>>0; h3=(h3+d)>>>0;
+    h4=(h4+e)>>>0; h5=(h5+f)>>>0; h6=(h6+g)>>>0; h7=(h7+h)>>>0;
+  }
+  const out = new Uint8Array(32);
+  const odv = new DataView(out.buffer);
+  [h0,h1,h2,h3,h4,h5,h6,h7].forEach((v,i)=>odv.setUint32(i*4, v));
+  return out;
+}
+
+const enc = new TextEncoder();
+function sha256str(s){ return sha256(enc.encode(s)); }
+function hex(bytes){ return [...bytes].map(b=>b.toString(16).padStart(2,'0')).join(''); }
+function hexToBytes(h){
+  const out = new Uint8Array(h.length/2);
+  for (let i=0;i<out.length;i++) out[i] = parseInt(h.substr(i*2,2),16);
+  return out;
+}
+function bigToBytes(v, len){
+  const out = new Uint8Array(len);
+  for (let i=len-1; i>=0; i--){ out[i] = Number(v & 255n); v >>= 8n; }
+  return out;
+}
+
+/* ============================================================
+   BIP39
+   ============================================================ */
+function entropyToMnemonic(bytes){
+  let bits = '';
+  for (const b of bytes) bits += b.toString(2).padStart(8,'0');
+  let csAll = '';
+  for (const b of sha256(bytes)) csAll += b.toString(2).padStart(8,'0');
+  const cs = csAll.slice(0, bits.length / 32);
+  const full = bits + cs;
+  const words = [];
+  for (let i=0; i<full.length; i+=11) words.push(WORDS[parseInt(full.slice(i,i+11), 2)]);
+  return { words, bits, cs };
+}
+
+/* ============================================================
+   Deck
+   ============================================================ */
+const RANKS = 'A23456789TJQK';
+const SUITS = 'CDHS';
+const DECK = [];
+for (const r of RANKS) for (const s of SUITS) DECK.push(r + s);
+
+/* ============================================================
+   Extractor — narrowing interval. Each round restarts from a full deck.
+   ============================================================ */
+function freshDeck(mode){
+  return mode === 'full' ? DECK.slice() : DECK.map(c => c[0]);
+}
+
+function extract(rounds, k, mode){
+  let LO = 0n, W = 1n, D = 1n;
+  const two = 1n << BigInt(k);
+  let used = 0;
+  for (let p = 0; p < rounds.length; p++){
+    let rem = freshDeck(mode);
+    const cards = rounds[p];
+    for (let i = 0; i < cards.length; i++){
+      const c = cards[i];
+      if (rem.length === 0) rem = freshDeck(mode);
+      const radix = rem.length;
+      const off = rem.indexOf(c);
+      if (off < 0) return { error:'repeat', round:p, at:i, card:c };
+      let w = 0;
+      for (const x of rem) if (x === c) w++;
+      rem.splice(off, 1);
+      LO = LO * BigInt(radix) + BigInt(off) * W;
+      W  = BigInt(w) * W;
+      D  = D * BigInt(radix);
+      used++;
+      if (W * two <= D && (LO * two) / D === ((LO + W) * two - 1n) / D){
+        return { done:true, value:(LO * two) / D, used, round:p, at:i };
+      }
+    }
+  }
+  return { done:false, used };
+}
+
+/* ============================================================
+   Parsing
+   ============================================================ */
+function parse(raw, mode){
+  const keep = mode === 'rank' ? /[^A2-9TJQK]/g : /[^A2-9TJQKCDHS]/g;
+  const s = raw.toUpperCase().replace(/10/g, 'T').replace(/1/g, 'A').replace(keep, '');
+  const tokens = [];
+  let i = 0;
+  while (i < s.length){
+    const r = s[i];
+    if (RANKS.indexOf(r) < 0) return { bad:'rank', ch:r, tokens };
+    if (mode === 'rank'){ tokens.push(r); i++; continue; }
+    if (i + 1 >= s.length) return { partial:true, tokens };
+    const su = s[i+1];
+    if (SUITS.indexOf(su) < 0) return { bad:'suit', ch:su, tokens };
+    tokens.push(r + su);
+    i += 2;
+  }
+  return { tokens };
+}
+
+/* ============================================================
+   Self-test
+   ============================================================ */
+const P1 = '7C9S3D2S9DJSAC3C7S8CAS4C8D8SAD7HQSKSKD6C5H5CJC9CTH4S6DKHAH3S';
+const P2 = 'AC5C5D6C3S2D6D3HTC8HQH3DJC8C7C4D9CKCKS7DTDAS9S2S3C8SQS9H2HJS';
+const Q1 = '79329JA378A488A7QKK655J9T46KA34Q59J4KJTT3862Q';
+const Q2 = 'A5563263T8Q3J8749KK7TA9238Q92J75KA892QA7KTJ54';
+
+const TESTS = [
+  ['SHA-256 empty string', () =>
+    hex(sha256str('')) === 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855'],
+  ['SHA-256 "abc"', () =>
+    hex(sha256str('abc')) === 'ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad'],
+  ['SHA-256 long input', () =>
+    hex(sha256str('a'.repeat(1000000))) === 'cdc76e5c9914fb9281a1c7e284d73e67f1809a48a497200e046d39ccc7112cd0'],
+  ['wordlist has 2048 entries', () => WORDS.length === 2048],
+  ['wordlist digest matches BIP39 english.txt', () =>
+    hex(sha256str(WORDS.join('\n') + '\n')) === '2f5eed53a4727b4bf8880d8f3f199efc90e58503646d9ff8eff3a2ed3b24dbda'],
+  ['BIP39 vector 128-bit zero', () =>
+    entropyToMnemonic(new Uint8Array(16)).words.join(' ') ===
+    'abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about'],
+  ['BIP39 vector 256-bit zero', () =>
+    entropyToMnemonic(new Uint8Array(32)).words.join(' ') === ('abandon '.repeat(23) + 'art')],
+  ['BIP39 vector 0x7f x16', () =>
+    entropyToMnemonic(new Uint8Array(16).fill(0x7f)).words.join(' ') ===
+    'legal winner thank year wave sausage worth useful legal winner thank yellow'],
+  ['BIP39 vector f585c11a…', () =>
+    entropyToMnemonic(hexToBytes('f585c11aec520db57dd353c69554b21a89b20fb0650966fa0a9d6f74fd989d8f')).words.join(' ') ===
+    'void come effort suffer camp survey warrior heavy shoot primary clutch crush open amazing screen patrol group space point ten exist slush involve unfold'],
+  ['deck is 52 distinct cards', () => DECK.length === 52 && new Set(DECK).size === 52],
+  ['parser splits rank and suit', () =>
+    parse('ah 10c 7S', 'full').tokens.join(' ') === 'AH TC 7S'],
+  ['parser maps 1 to A and 10 to T in ranks', () =>
+    parse('1 7 10 q k 2', 'rank').tokens.join(' ') === 'A 7 T Q K 2'],
+  ['parser maps 1H and 10C in full cards', () =>
+    parse('1h 10c 7s', 'full').tokens.join(' ') === 'AH TC 7S'],
+  ['round one is exactly 30 full cards / 45 ranks', () =>
+    parse(P1,'full').tokens.length === 30 && parse(P2,'full').tokens.length === 30 &&
+    parse(Q1,'rank').tokens.length === 45 && parse(Q2,'rank').tokens.length === 45],
+  ['full mode, 12 words, one round', () => {
+    const r = extract([parse(P1,'full').tokens], 128, 'full');
+    return r.done && r.used === 25 &&
+      hex(bigToBytes(r.value,16)) === '79741d6e881d74cf3652f436d05f5f10';
+  }],
+  ['full mode, 24 words, two rounds', () => {
+    const r = extract([parse(P1,'full').tokens, parse(P2,'full').tokens], 256, 'full');
+    return r.done && r.used === 50 && r.round === 1 &&
+      hex(bigToBytes(r.value,32)) === '79741d6e881d74cf3652f436d05f5f10befdb375b097fd85a7bf8ece1742eb8c';
+  }],
+  ['ranks-only, 12 words, one round', () => {
+    const r = extract([parse(Q1,'rank').tokens], 128, 'rank');
+    return r.done && r.used === 37 &&
+      hex(bigToBytes(r.value,16)) === '82632fed102de0fc3d051c6c160b4dbd';
+  }],
+  ['ranks-only, 24 words, two rounds', () => {
+    const r = extract([parse(Q1,'rank').tokens, parse(Q2,'rank').tokens], 256, 'rank');
+    return r.done && r.used === 74 &&
+      hex(bigToBytes(r.value,32)) === '82632fed102de0fc3d051c6c160b4dbd1cda69cdc787f150b113fbe1c1e847aa';
+  }],
+  ['24 words cannot lock inside round one', () =>
+    extract([parse(P1,'full').tokens], 256, 'full').done === false &&
+    extract([parse(Q1,'rank').tokens], 256, 'rank').done === false],
+  ['the round boundary changes the result', () => {
+    const t1 = parse(P1,'full').tokens, t2 = parse(P2,'full').tokens;
+    const split = extract([t1, t2], 256, 'full');
+    const joined = extract([t1.concat(t2)], 256, 'full');
+    return split.done && (!joined.done || joined.value !== split.value);
+  }],
+  ['a repeat inside a round is rejected', () =>
+    extract([['AH','7C','AH']], 128, 'full').error === 'repeat'],
+  ['a repeat across rounds is allowed', () =>
+    extract([['AH','7C'], ['AH','7C']], 128, 'full').error === undefined],
+  ['factory order extracts to zero', () => {
+    const r = extract([DECK.slice(0,30)], 128, 'full');
+    return r.done && hex(bigToBytes(r.value,16)) === '0'.repeat(32);
+  }],
+];
+
+function runSelfTest(){
+  const lines = [];
+  let failed = 0;
+  for (const [name, fn] of TESTS){
+    let ok = false;
+    try { ok = fn() === true; } catch (e) { ok = false; }
+    if (!ok) failed++;
+    lines.push((ok ? 'pass  ' : 'FAIL  ') + name);
+  }
+  const bar = $('stBar'), txt = $('stText');
+  if (failed === 0){
+    txt.textContent = 'self-test passed · ' + TESTS.length + ' checks · SHA-256, wordlist, BIP39 vectors, extractor, round structure';
+  } else {
+    bar.classList.add('fail');
+    txt.textContent = 'SELF-TEST FAILED · ' + failed + ' of ' + TESTS.length + ' checks · do not use this file';
+    $('testDetail').hidden = false;
+  }
+  $('testDetail').textContent = lines.join('\n');
+}
+
+/* ============================================================
+   UI
+   ============================================================ */
+const $ = id => document.getElementById(id);
+const state = { bits: 128, mode: 'rank', round2: false, r2Finished: false, reveal: 0 };
+const dealN = () => state.mode === 'full' ? 30 : 45;
+const rounds = () => state.bits === 256 ? 2 : 1;
+
+const REF = `# AVB 52 card generator Basic — one list per round, each round starts from a full deck
+RANKS, SUITS = 'A23456789TJQK', 'CDHS'
+DECK = [r + s for r in RANKS for s in SUITS]
+
+def extract(rounds, k, mode):         # mode: 'full' or 'rank'
+    LO, W, D, two = 0, 1, 1, 1 << k
+    used = 0
+    for cards in rounds:
+        rem = list(DECK) if mode == 'full' else [c[0] for c in DECK]
+        for c in cards:
+            T, off, w = len(rem), rem.index(c), rem.count(c)
+            rem.pop(off)
+            LO, W, D = LO * T + off * W, w * W, D * T
+            used += 1
+            if W * two <= D and (LO * two) // D == ((LO + W) * two - 1) // D:
+                return '%0*x' % (k // 4, (LO * two) // D), used
+    return None                        # deal one more card
+
+# 12 words (default): extract([round1], 128, 'rank')
+# 24 words (default): extract([round1, round2], 256, 'rank')
+# full cards:         extract([round1], 128, 'full')`;
+
+$('stToggle').onclick = () => { const d = $('testDetail'); d.hidden = !d.hidden; };
+$('helpClose').onclick = closeHelp;
+$('helpOverlay').addEventListener('click', e => { if (e.target === $('helpOverlay')) closeHelp(); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeHelp(); });
+
+function openHelp(){ $('helpOverlay').hidden = false; }
+function closeHelp(){ $('helpOverlay').hidden = true; }
+
+function fillHelp(){
+  const ranks = [
+    ['Ace', 'A', '1'],
+    ['Two', '2', ''],
+    ['Three', '3', ''],
+    ['Four', '4', ''],
+    ['Five', '5', ''],
+    ['Six', '6', ''],
+    ['Seven', '7', ''],
+    ['Eight', '8', ''],
+    ['Nine', '9', ''],
+    ['Ten', 'T', '10'],
+    ['Jack', 'J', ''],
+    ['Queen', 'Q', ''],
+    ['King', 'K', '']
+  ];
+  let html = '<table class="cheats"><thead><tr><th>Card</th><th>Type</th><th>Also accepted</th></tr></thead><tbody>';
+  for (const [name, main, extra] of ranks){
+    html += '<tr><td>' + name + '</td><td><code>' + main + '</code></td><td>' +
+      (extra ? '<code>' + extra + '</code>' : '—') + '</td></tr>';
+  }
+  html += '</tbody></table>';
+  if (state.mode === 'full'){
+    html += '<p class="hint" style="margin-top:12px">Then add a suit. No space needed.</p>' +
+      '<table class="cheats"><thead><tr><th>Suit</th><th>Type</th><th>Example</th></tr></thead><tbody>' +
+      '<tr><td>Clubs</td><td><code>C</code></td><td><code>AC</code> or <code>1C</code></td></tr>' +
+      '<tr><td>Diamonds</td><td><code>D</code></td><td><code>10D</code> or <code>TD</code></td></tr>' +
+      '<tr><td>Hearts</td><td><code>H</code></td><td><code>AH</code> or <code>1H</code></td></tr>' +
+      '<tr><td>Spades</td><td><code>S</code></td><td><code>QS</code></td></tr>' +
+      '</tbody></table>' +
+      '<p class="hint" style="margin-top:10px">Case does not matter. <code>ah 7c 10d qs</code> is read as AH 7C TD QS.</p>';
+  } else {
+    html += '<p class="hint" style="margin-top:12px">Do not type suits in ranks-only mode. They are ignored. ' +
+      'Case and spaces do not matter. <code>1 7 10 Q</code> is read as A 7 T Q.</p>';
+  }
+  $('helpBody').innerHTML = html;
+}
+
+function showRead(el, parsed){
+  if (!el) return;
+  if (parsed.bad){
+    el.innerHTML = parsed.bad === 'rank'
+      ? 'not a rank: “' + parsed.ch + '”. Use A (or 1), 2–9, T (or 10), J, Q, K.'
+      : 'not a suit: “' + parsed.ch + '”. Use C, D, H or S.';
+    return;
+  }
+  if (!parsed.tokens.length){
+    el.innerHTML = parsed.partial ? 'waiting for the suit…' : '';
+    return;
+  }
+  el.innerHTML = 'read as: <b>' + parsed.tokens.map(pretty).join(' ') + '</b>' +
+    (parsed.partial ? ' · waiting for the suit…' : '') +
+    ' · ' + parsed.tokens.length + ' typed';
+}
+$('w12').onclick   = () => setLen(128);
+$('w24').onclick   = () => setLen(256);
+$('mFull').onclick = () => setMode('full');
+$('mRank').onclick = () => setMode('rank');
+$('clear1').onclick = () => { $('ta1').value = ''; closeRound2(); update(); $('ta1').focus(); };
+$('clear2').onclick = () => { $('ta2').value = ''; state.r2Finished = false; state.reveal = 0; lockDealTwo(false); update(); $('ta2').focus(); };
+$('undo1').onclick  = () => { popLast('ta1'); closeRound2(); update(); };
+$('undo2').onclick  = () => { popLast('ta2'); state.r2Finished = false; state.reveal = 0; lockDealTwo(false); update(); };
+$('startRound2').onclick = () => {
+  state.round2 = true;
+  state.r2Finished = false;
+  state.reveal = 0;
+  $('round2sheet').hidden = false;
+  $('startRound2').hidden = true;
+  lockDealOne(true);
+  $('editRound1').hidden = false;
+  update();
+  $('ta2').focus();
+};
+
+$('finishRound2').onclick = () => {
+  state.r2Finished = true;
+  state.reveal = 1;
+  update();
+};
+
+$('revealBtn').onclick = () => {
+  if (state.reveal === 1) state.reveal = 2;
+  else if (state.reveal === 2) state.reveal = 3;
+  update();
+};
+
+$('editRound1').onclick = () => {
+  state.round2 = false;
+  state.r2Finished = false;
+  state.reveal = 0;
+  $('round2sheet').hidden = true;
+  $('ta2').value = '';
+  lockDealOne(false);
+  $('ta1').focus();
+  update();
+};
+
+function popLast(id){
+  const p = parse($(id).value, state.mode);
+  p.tokens.pop();
+  $(id).value = p.tokens.join(' ');
+}
+function lockDealOne(on){
+  $('ta1').disabled = on;
+  $('ta1').readOnly = on;
+  $('undo1').disabled = on;
+  $('clear1').disabled = on;
+  $('round1sheet').classList.toggle('locked', on);
+  $('r1stamp').hidden = !on;
+}
+function lockDealTwo(on){
+  $('ta2').disabled = on;
+  $('ta2').readOnly = on;
+  $('undo2').disabled = on;
+  $('clear2').disabled = on;
+  $('editRound1').disabled = on;
+  $('round2sheet').classList.toggle('locked', on);
+  $('r2stamp').hidden = !on;
+}
+function closeRound2(){
+  state.round2 = false;
+  state.r2Finished = false;
+  state.reveal = 0;
+  $('round2sheet').hidden = true;
+  $('ta2').value = '';
+  lockDealOne(false);
+  lockDealTwo(false);
+  $('editRound1').hidden = true;
+}
+function resetAll(){
+  $('ta1').value = '';
+  closeRound2();
+}
+
+function dealInProgress(){
+  return parse($('ta1').value, state.mode).tokens.length > 0;
+}
+function confirmWipe(){
+  return !dealInProgress() ||
+    confirm('This clears the cards you have already dealt. The length and reading mode must be fixed before the first card. Continue?');
+}
+function setLen(b){
+  if (b === state.bits) return;
+  if (!confirmWipe()) return;
+  state.bits = b;
+  $('w12').classList.toggle('on', b === 128);
+  $('w24').classList.toggle('on', b === 256);
+  resetAll();
+  refresh();
+}
+function setMode(m){
+  if (m === state.mode) return;
+  if (!confirmWipe()) return;
+  state.mode = m;
+  $('mFull').classList.toggle('on', m === 'full');
+  $('mRank').classList.toggle('on', m === 'rank');
+  resetAll();
+  refresh();
+}
+
+function refresh(){
+  const n = dealN(), unit = state.mode === 'full' ? 'cards' : 'ranks';
+  $('need1').textContent = n;
+  $('need2').textContent = n;
+  $('phraseStep').textContent = rounds() === 2 ? '4' : '3';
+  $('stepCheck').textContent   = rounds() === 2 ? '5' : '4';
+  $('stepRepro').textContent   = rounds() === 2 ? '6' : '5';
+  $('head1').textContent       = rounds() === 2 ? 'Deal One' : 'The deal';
+  $('w12n').textContent = n + ' ' + unit + ' · one deal';
+  $('w24n').textContent = n + ' + ' + n + ' · two deals';
+  $('dealLabel1').textContent = rounds() === 2
+    ? 'Type ' + n + ' ' + unit + ' — deal one of two'
+    : 'Type ' + n + ' ' + unit + ' — one deal';
+  if ($('dealLabel2')) $('dealLabel2').textContent = 'Type ' + n + ' ' + unit + ' — deal two of two';
+  paintBeats(0);
+  $('ritual').innerHTML = rounds() === 1
+    ? '12 words: shuffle the full deck once, deal <b>' + n + '</b> ' + unit + '. Stop there.'
+    : '24 words: shuffle the full deck, deal <b>' + n + '</b> ' + unit +
+      '. Then put <b>all 52</b> back, shuffle again, deal another <b>' + n + '</b> ' + unit +
+      '. That is <b>' + n + ' + ' + n + '</b>, not the leftover cards.';
+  if ($('round2help')){
+    $('round2help').innerHTML = 'Gather <strong>all 52</strong> cards, including the ' + n +
+      ' already face up. Shuffle the whole deck again — at least seven riffles, or a thirty-second wash face down — then deal another <strong>' + n + ' ' + unit + '</strong>. Do not deal the leftover cards.';
+  }
+  const ph = state.mode === 'full' ? 'AH 7C 10D QS …' : 'A 7 10 Q K …';
+  $('ta1').placeholder = ph; $('ta2').placeholder = ph;
+  $('notation').innerHTML = state.mode === 'rank'
+    ? '<div class="row"><p class="lead" style="margin:0">Ranks only — one character per card.</p>' +
+      '<button class="helpbtn" id="helpOpen" type="button">What do I type?</button></div>' +
+      '<div class="keys">' +
+        '<b>A</b><b>2</b><b>3</b><b>4</b><b>5</b><b>6</b><b>7</b><b>8</b><b>9</b><b>T</b><b>J</b><b>Q</b><b>K</b>' +
+      '</div>' +
+      '<p class="hint"><em>1</em> → A. <em>10</em> → T. Open the list for every accepted spelling.</p>'
+    : '<div class="row"><p class="lead" style="margin:0">Full cards — rank, then suit.</p>' +
+      '<button class="helpbtn" id="helpOpen" type="button">What do I type?</button></div>' +
+      '<div class="keys">' +
+        '<b>A</b><b>2</b><b>3</b><b>4</b><b>5</b><b>6</b><b>7</b><b>8</b><b>9</b><b>T</b><b>J</b><b>Q</b><b>K</b>' +
+        '<b class="soft">+</b><b>C</b><b>D</b><b>H</b><b>S</b>' +
+      '</div>' +
+      '<p class="hint">Suits: C D H S. <em>1</em> → A. <em>10</em> → T. Open the list for every accepted spelling.</p>';
+  fillHelp();
+  const open = $('helpOpen');
+  if (open) open.onclick = openHelp;
+  buildPips('pips1'); buildPips('pips2');
+  update();
+}
+
+function buildPips(id){
+  const el = $(id);
+  el.innerHTML = '';
+  for (let i=0;i<dealN();i++) el.appendChild(document.createElement('i'));
+}
+
+$('ta1').addEventListener('input', update);
+$('ta2').addEventListener('input', update);
+
+function writeTokens(id, tokens){
+  $(id).value = tokens.join(' ');
+}
+
+function paintBeats(p1count){
+  const el = $('beats');
+  if (!el) return;
+  if (rounds() !== 2){ el.hidden = true; el.innerHTML = ''; return; }
+  const n = dealN(), unit = state.mode === 'full' ? 'cards' : 'ranks';
+  let step = 0;
+  if (state.r2Finished) step = 3;
+  else if (state.round2) step = 2;
+  else if (p1count >= n) step = 1;
+  const labels = [
+    'Deal One · ' + n + ' ' + unit,
+    'Confirm & reshuffle all 52',
+    'Deal Two · ' + n + ' ' + unit
+  ];
+  el.hidden = false;
+  el.innerHTML = labels.map((lab, i) => {
+    const cls = i < step ? 'done' : (i === step ? 'on' : '');
+    return '<li class="' + cls + '">' + lab + '</li>';
+  }).join('');
+}
+
+function hidePhrase(msg){
+  const sheet = $('phraseSheet'), body = $('phraseBody'), wait = $('phraseWait');
+  if (sheet) sheet.classList.add('collapsed');
+  if (body) body.hidden = true;
+  if (wait){ wait.hidden = false; wait.textContent = msg; }
+  if ($('revealBtn')) $('revealBtn').hidden = true;
+  if ($('receipt')) $('receipt').hidden = true;
+}
+
+function showPhrase(){
+  const sheet = $('phraseSheet'), body = $('phraseBody'), wait = $('phraseWait');
+  if (sheet) sheet.classList.remove('collapsed');
+  if (wait) wait.hidden = true;
+  if (body) body.hidden = false;
+}
+
+function update(){
+  const n = dealN();
+  const unit = state.mode === 'full' ? 'cards' : 'ranks';
+  let p1 = parse($('ta1').value, state.mode);
+  let p2 = state.round2 ? parse($('ta2').value, state.mode) : { tokens: [] };
+
+  showRead($('read1'), p1);
+  if (state.round2) showRead($('read2'), p2);
+  else if ($('read2')) $('read2').textContent = '';
+
+  // parse errors
+  for (const [p, id] of [[p1,'1'], [p2,'2']]){
+    if (p.bad){
+      say(id, p.bad === 'rank'
+        ? '“' + p.ch + '” is not a rank. Use A (or 1), 2–9, T (or 10), J, Q or K.'
+        : '“' + p.ch + '” is not a suit. Use C, D, H or S.');
+      return blank(p1, p2);
+    }
+  }
+
+  // 24-word round one: hard stop at N. Extra keystrokes are dropped, not kept.
+  if (rounds() === 2 && !state.round2 && p1.tokens.length > n){
+    p1.tokens = p1.tokens.slice(0, n);
+    writeTokens('ta1', p1.tokens);
+  }
+  if (rounds() === 2 && !state.round2 && p1.partial && p1.tokens.length >= n){
+    writeTokens('ta1', p1.tokens);
+    p1 = parse($('ta1').value, state.mode);
+  }
+
+  const list = state.round2 ? [p1.tokens, p2.tokens] : [p1.tokens];
+  const r = extract(list, state.bits, state.mode);
+
+  if (r.error === 'repeat'){
+    say(String(r.round + 1), 'Card ' + (r.at + 1) + ' of this round is ' + pretty(r.card) +
+      ', already face up in this round. A card cannot be dealt twice from one deck.');
+    return blank(p1, p2);
+  }
+
+  // 12-word deal, or 24-word round two: once the value has locked at N, drop extras.
+  if (r.done){
+    if (rounds() === 1 && p1.tokens.length > n){
+      p1.tokens = p1.tokens.slice(0, Math.max(n, r.at + 1));
+      writeTokens('ta1', p1.tokens);
+    }
+    if (state.round2 && p2.tokens.length > n && r.round === 1){
+      p2.tokens = p2.tokens.slice(0, Math.max(n, r.at + 1));
+      writeTokens('ta2', p2.tokens);
+    }
+  }
+
+  say('1', null); say('2', null);
+  paint('1', p1.tokens, r, 0);
+  if (state.round2) paint('2', p2.tokens, r, 1);
+
+  if (rounds() === 2 && !state.round2 && p1.tokens.length >= n){
+    $('ta1').readOnly = true;
+  }
+  if (state.round2) lockDealOne(true);
+  lockDealTwo(!!state.r2Finished);
+
+  const gate = $('startRound2');
+  const help = $('gateHelp');
+  if (rounds() === 2 && !state.round2){
+    gate.hidden = false;
+    gate.disabled = p1.tokens.length !== n;
+    if (p1.tokens.length === n){
+      help.hidden = false;
+      help.className = 'msg note';
+      help.textContent = 'First deal is full (' + n + ' ' + unit +
+        '). Do not type more cards here. Put every card back — all 52, including these ' + n +
+        ' — shuffle again (seven riffles or a thirty-second wash), then press Confirm deal one.';
+      gate.innerHTML = 'Confirm deal one — all 52 are back in and reshuffled<small>this closes deal one (it will grey out) and opens deal two. Deal another ' + n + ' ' + unit + '.</small>';
+    } else {
+      help.hidden = true;
+      gate.innerHTML = 'Deal ' + (n - p1.tokens.length) + ' more ' + unit + ' to finish deal one';
+    }
+  } else {
+    gate.hidden = true;
+    if (help) help.hidden = true;
+  }
+
+  const fin = $('finishRound2');
+  const fhelp = $('finishHelp');
+  const r2Ready = rounds() === 2 && state.round2 && r.done && p2.tokens.length >= n;
+  if (fin && rounds() === 2 && state.round2 && !state.r2Finished){
+    fin.hidden = false;
+    fin.disabled = !r2Ready;
+    if (r2Ready){
+      fhelp.hidden = false;
+      fhelp.className = 'msg note';
+      fhelp.textContent = 'Deal two is full. Press Finished round 2 to close this area and show the phrase — first blurred, then you unblur it.';
+      fin.innerHTML = 'Finished round 2<small>closes deal two and shows the 24 words blurred</small>';
+    } else {
+      fhelp.hidden = true;
+      fin.innerHTML = 'Finished round 2<small>deal the remaining ' + unit + ' first</small>';
+    }
+  } else {
+    if (fin) fin.hidden = true;
+    if (fhelp) fhelp.hidden = true;
+  }
+
+  paintBeats(p1.tokens.length);
+
+  if (rounds() === 2 && !state.round2){
+    hidePhrase(p1.tokens.length >= n
+      ? 'Words stay hidden until both deals are confirmed.'
+      : 'Words stay hidden until both deals are confirmed.');
+    return;
+  }
+
+  if (rounds() === 2 && state.round2 && !state.r2Finished){
+    hidePhrase(r2Ready
+      ? 'Words stay hidden until you press Finished round 2.'
+      : 'Words stay hidden until both deals are confirmed.');
+    if (!r.done){
+      if (p2.tokens.length >= n){
+        say('2', 'Rare, but it happens: the value has not settled yet. Deal one more card.');
+      }
+    }
+    return;
+  }
+
+  if (!r.done){
+    $('revealBtn').hidden = true;
+    const finalTokens = state.round2 ? p2.tokens : p1.tokens;
+    const onFinal = rounds() === 1 || state.round2;
+    if (onFinal && finalTokens.length >= n){
+      say(state.round2 ? '2' : '1',
+        'Rare, but it happens: the value has not settled yet. Deal one more card.');
+    }
+    return blank(p1, p2);
+  }
+
+  render(bigToBytes(r.value, state.bits / 8), list, r);
+}
+
+function paint(id, tokens, r, roundIdx){
+  const n = dealN();
+  $('n' + id).textContent = tokens.length;
+  const over = tokens.length > n && !(r.done && r.round === roundIdx);
+  const pips = $('pips' + id).children;
+  for (let i=0;i<pips.length;i++)
+    pips[i].className = over ? 'over' : (i < tokens.length ? 'set' : '');
+  const lockedHere = r.done && r.round === roundIdx;
+  $('done' + id).hidden = !(lockedHere || tokens.length >= n);
+  $('tag' + id).textContent = lockedHere
+    ? 'locked at card ' + (r.at + 1) + ' — you can stop dealing'
+    : '';
+  const hand = $('hand' + id);
+  hand.innerHTML = '';
+  const seen = {};
+  let repeats = 0;
+  tokens.forEach((t, i) => {
+    const rk = t[0];
+    const nth = seen[rk] = (seen[rk] || 0) + 1;
+    if (nth > 1) repeats++;
+    const s = document.createElement('span');
+    let cls = [];
+    if (t.length === 2 && (t[1] === 'H' || t[1] === 'D')) cls.push('red');
+    if (nth > 1 && nth <= 4) cls.push('r' + nth);
+    if (lockedHere && i > r.at) cls.push('spent');
+    s.className = cls.join(' ');
+    s.appendChild(document.createTextNode(pretty(t)));
+    if (nth > 1){
+      const sup = document.createElement('sup');
+      sup.textContent = nth;
+      s.appendChild(sup);
+    }
+    hand.appendChild(s);
+  });
+
+  const note = $('note' + id);
+  note.hidden = repeats === 0;
+  note.textContent = state.mode === 'rank'
+    ? 'shade deepens each time a rank comes back — the fourth is the last one in the deck, and worth the most'
+    : 'shade deepens each time a rank comes back — a tally only, every card is worth the same here';
+
+  const led = $('led' + id);
+  led.hidden = state.mode !== 'rank';
+  if (!led.hidden){
+    led.innerHTML = '';
+    for (const rk of RANKS){
+      const c = seen[rk] || 0;
+      const cell = document.createElement('div');
+      if (c >= 4) cell.className = 'used';
+      const b = document.createElement('b');
+      b.textContent = rk === 'T' ? '10' : rk;
+      cell.appendChild(b);
+      cell.appendChild(document.createTextNode(c >= 4 ? 'out' : c + '/4'));
+      led.appendChild(cell);
+    }
+  }
+}
+
+function say(id, message){
+  const m = $('msg' + id);
+  if (!m) return;
+  m.hidden = !message;
+  if (message){
+    m.textContent = message;
+    m.className = 'msg' + (message.indexOf('Rare') === 0 ? ' note' : '');
+  }
+}
+
+function blank(p1, p2){
+  hidePhrase(rounds() === 2
+    ? 'Words stay hidden until both deals are confirmed.'
+    : 'Words stay hidden until this deal is finished.');
+}
+
+function pretty(t){
+  const glyph = { C:'\u2663', D:'\u2666', H:'\u2665', S:'\u2660' };
+  const r = t[0] === 'T' ? '10' : t[0];
+  return t.length === 2 ? r + glyph[t[1]] : r;
+}
+
+function render(bytes, list, r){
+  const mn = entropyToMnemonic(bytes);
+  const stage = rounds() === 2 ? state.reveal : 3;
+  showPhrase();
+  $('cardZone').innerHTML = '';
+  const card = wordCard(mn.words);
+  if (stage === 1) card.classList.add('blurred');
+  $('cardZone').appendChild(card);
+  const grid = bitGrid(mn.bits, mn.cs);
+  if (stage < 3) grid.classList.add('blurred');
+  if (stage >= 2) $('cardZone').appendChild(grid);
+  const names = ['Round One', 'Round Two'];
+  const shown = [];
+  for (let p=0; p<list.length; p++){
+    const cut = (p === r.round) ? r.at + 1 : list[p].length;
+    shown.push(names[p] + ' : ' + list[p].slice(0, cut).map(pretty).join(' '));
+    if (p === r.round) break;
+  }
+  const rec = $('receipt');
+  rec.innerHTML =
+    '<div><b>ritual</b> ' + (state.mode === 'full' ? 'full cards' : 'ranks only') +
+      ' · ' + (rounds() === 2 ? 'two deals' : 'one deal') + ' of ' + dealN() +
+      ' · locked after ' + r.used + ' cards dealt</div>' +
+    shown.map(s => '<div><b>' + s.split(' : ')[0] + ' :</b> ' + s.split(' : ')[1] + '</div>').join('') +
+    '<div><b>entropy</b> ' + hex(bytes) + '</div>' +
+    '<div><b>checksum</b> <span class="csbits">' + mn.cs + '</span></div>';
+  rec.hidden = stage < 2;
+  rec.classList.toggle('blurred', stage === 2);
+  const rev = $('revealBtn');
+  if (rounds() === 2 && stage < 3){
+    rev.hidden = false;
+    rev.innerHTML = stage === 1
+      ? 'Unblur the words<small>numbers stay visible so you can count 24 slots</small>'
+      : 'Unblur entropy and checksum<small>last step — then write the words on paper</small>';
+  } else {
+    rev.hidden = true;
+  }
+}
+
+function wordCard(words){
+  const card = document.createElement('div');
+  card.className = 'wordcard';
+  words.forEach((w,i)=>{
+    const d = document.createElement('div');
+    d.className = 'word';
+    const n = document.createElement('span'); n.className = 'n'; n.textContent = i+1;
+    const s = document.createElement('span'); s.textContent = w;
+    d.appendChild(n); d.appendChild(s);
+    card.appendChild(d);
+  });
+  return card;
+}
+
+function bitGrid(bits, cs){
+  const wrap = document.createElement('div');
+  wrap.className = 'bitwrap';
+  wrap.style.marginTop = '16px';
+  const g = document.createElement('div');
+  g.className = 'bitgrid';
+  g.setAttribute('aria-hidden','true');
+  for (const b of bits){
+    const i = document.createElement('i');
+    if (b === '1') i.className = 'one';
+    g.appendChild(i);
+  }
+  for (const b of cs){
+    const i = document.createElement('i');
+    i.className = 'cs' + (b === '1' ? ' one' : '');
+    g.appendChild(i);
+  }
+  const l = document.createElement('div');
+  l.className = 'legend';
+  l.innerHTML = '<span><i></i>0</span><span><i class="one"></i>1</span>' +
+                '<span><i class="cs"></i>checksum bits (calculated SHA-256)</span>';
+  wrap.appendChild(g); wrap.appendChild(l);
+  return wrap;
+}
+
+$('hexIn').addEventListener('input', () => {
+  const h = $('hexIn').value.replace(/[^0-9a-fA-F]/g,'').toLowerCase();
+  const out = $('hexOut');
+  if (h.length !== 64 && h.length !== 32){ out.hidden = true; return; }
+  const m = entropyToMnemonic(hexToBytes(h));
+  out.hidden = false;
+  out.innerHTML = '<div><b>' + m.words.length + ' words</b> ' + m.words.join(' ') + '</div>' +
+                  '<div><b>checksum</b> <span class="csbits">' + m.cs + '</span></div>';
+});
+
+$('refCode').textContent = REF;
+runSelfTest();
+refresh();
+</script>
+
+</body>
+</html>
