@@ -8,7 +8,7 @@ Each HTML file is the whole program. No network, no extra scripts, no browser st
 
 **Do not generate a seed from this GitHub page, from a raw URL, or from GitHub Pages.** Download the Release zip, check the hashes, then work offline.
 
-Current drop: **v1.0.0**.
+Current drop: **v1.1.0** (AVB 52 updated to v1.1.0; Dice → Seed and SeedPhrasePoker unchanged at v1.0.0).
 
 ## Layout
 
